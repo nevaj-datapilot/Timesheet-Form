@@ -93,6 +93,16 @@
     border-radius: 2px;
   }
 
+  /* NEXT WEEK CARD — visually distinct, planning rather than logging */
+  .next-week-card {
+    background: linear-gradient(135deg, #F0F7FA 0%, #FFFFFF 100%);
+    border: 2px dashed var(--teal);
+  }
+  .next-week-card h2 { color: var(--teal); }
+  .next-week-card h2::before { background: var(--teal); }
+  .next-week-card .checkbox-row label { background: white; }
+  .next-week-card .checkbox-row label.checked { background: var(--teal); }
+
   /* INPUTS */
   label {
     display: block;
@@ -504,6 +514,34 @@
       <textarea id="comments" rows="2" placeholder="Anything to flag for this week?"></textarea>
     </div>
 
+    <!-- NEXT WEEK PLANNING -->
+    <div class="card next-week-card">
+      <h2>📅 Heads-up for next week</h2>
+      <p class="hint">Help your team plan ahead. These don't count toward this week's 5 days.</p>
+
+      <div style="margin-bottom: 18px">
+        <label style="margin-bottom: 10px">Which day(s) do you plan to work from home next week?</label>
+        <div class="checkbox-row" id="next-wfh-row">
+          <label><input type="checkbox" name="nextWfh" value="Mon"> <span>Monday</span></label>
+          <label><input type="checkbox" name="nextWfh" value="Tue"> <span>Tuesday</span></label>
+          <label><input type="checkbox" name="nextWfh" value="Wed"> <span>Wednesday</span></label>
+          <label><input type="checkbox" name="nextWfh" value="Thu"> <span>Thursday</span></label>
+          <label><input type="checkbox" name="nextWfh" value="Fri"> <span>Friday</span></label>
+        </div>
+      </div>
+
+      <div>
+        <label style="margin-bottom: 10px">Do you have planned leave next week?</label>
+        <div class="checkbox-row" id="next-leave-row">
+          <label><input type="checkbox" name="nextLeave" value="Mon"> <span>Monday</span></label>
+          <label><input type="checkbox" name="nextLeave" value="Tue"> <span>Tuesday</span></label>
+          <label><input type="checkbox" name="nextLeave" value="Wed"> <span>Wednesday</span></label>
+          <label><input type="checkbox" name="nextLeave" value="Thu"> <span>Thursday</span></label>
+          <label><input type="checkbox" name="nextLeave" value="Fri"> <span>Friday</span></label>
+        </div>
+      </div>
+    </div>
+
   </form>
 </div>
 
@@ -736,9 +774,9 @@
   loadProjects();
 
   // =========================================================
-  // CHECKBOX VISUAL FEEDBACK
+  // CHECKBOX VISUAL FEEDBACK (this-week WFH + next-week WFH/Leave)
   // =========================================================
-  document.querySelectorAll('#wfh-row input[type="checkbox"]').forEach(cb => {
+  document.querySelectorAll('.checkbox-row input[type="checkbox"]').forEach(cb => {
     cb.addEventListener("change", () => {
       cb.parentElement.classList.toggle("checked", cb.checked);
       saveDraft();
@@ -882,11 +920,15 @@
       }
     });
     const wfh = Array.from(document.querySelectorAll('input[name="wfh"]:checked')).map(c => c.value).join(",");
+    const nextWfh = Array.from(document.querySelectorAll('input[name="nextWfh"]:checked')).map(c => c.value).join(",");
+    const nextLeave = Array.from(document.querySelectorAll('input[name="nextLeave"]:checked')).map(c => c.value).join(",");
     return {
       email: document.getElementById("email").value,
       name: document.getElementById("name").value,
       weekStart: document.getElementById("weekStart").value,
       wfh,
+      nextWfh,
+      nextLeave,
       comments: document.getElementById("comments").value,
       entries
     };
@@ -898,6 +940,18 @@
     if (data.wfh) {
       data.wfh.split(",").forEach(v => {
         const cb = document.querySelector(`input[name="wfh"][value="${v}"]`);
+        if (cb) { cb.checked = true; cb.parentElement.classList.add("checked"); }
+      });
+    }
+    if (data.nextWfh) {
+      data.nextWfh.split(",").forEach(v => {
+        const cb = document.querySelector(`input[name="nextWfh"][value="${v}"]`);
+        if (cb) { cb.checked = true; cb.parentElement.classList.add("checked"); }
+      });
+    }
+    if (data.nextLeave) {
+      data.nextLeave.split(",").forEach(v => {
+        const cb = document.querySelector(`input[name="nextLeave"][value="${v}"]`);
         if (cb) { cb.checked = true; cb.parentElement.classList.add("checked"); }
       });
     }
@@ -996,7 +1050,9 @@
       const detail = en.project ? `${en.project} — ${en.taskOrActivity}` : en.taskOrActivity;
       html += `<tr class="${isAutoRow ? 'auto' : ''}"><td>${en.category}</td><td>${detail}</td><td style="text-align:right">${formatNum(en.days)}</td></tr>`;
     });
-    if (data.wfh) html += `<tr><td>WFH</td><td colspan="2">${data.wfh}</td></tr>`;
+    if (data.wfh) html += `<tr><td>WFH this week</td><td colspan="2">${data.wfh}</td></tr>`;
+    if (data.nextWfh) html += `<tr><td>WFH next week</td><td colspan="2">${data.nextWfh}</td></tr>`;
+    if (data.nextLeave) html += `<tr><td>Leave next week</td><td colspan="2">${data.nextLeave}</td></tr>`;
     html += '</tbody>';
     tbl.innerHTML = html;
   }
