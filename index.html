@@ -15,16 +15,17 @@
     --teal-light: #5BC0D2;
     --amber: #F5A623;
     --amber-soft: #FFE4B5;
-    --bg: #FAFAFA;
+    --pink: #D87B89;
+    --bg: #FFFCF5;          /* warm cream like Datapilot site */
     --card: #FFFFFF;
-    --border: #E5E7EB;
+    --border: #EAE6DA;
     --muted: #6B7280;
     --text: #1A1A1A;
     --green: #16A34A;
     --green-bg: #DCFCE7;
     --red: #DC2626;
     --red-bg: #FEE2E2;
-    --sub-bg: #F0F7FA;
+    --sub-bg: #F7F4EB;
     --regie-bg: #FEF5E7;
   }
   * { box-sizing: border-box; }
@@ -39,20 +40,13 @@
     overflow-x: hidden;
   }
 
-  /* Brand element decorations — fixed in viewport, low opacity, behind content */
-  body::before, body::after,
-  .deco { pointer-events: none; }
-  .deco {
-    position: fixed;
-    z-index: 0;
-    opacity: 0.07;
-    user-select: none;
-  }
-  .deco-1 { top: -60px; right: -80px; width: 320px; transform: rotate(15deg); }
-  .deco-2 { bottom: 200px; left: -100px; width: 280px; transform: rotate(-25deg); }
-  .deco-3 { top: 40%; right: -120px; width: 360px; transform: rotate(45deg); }
-  .deco-4 { top: 30%; left: -50px; width: 200px; }
-  .deco-5 { bottom: 0; right: 10%; width: 240px; transform: rotate(-10deg); }
+  /* Brand element decorations — full-opacity accents in specific spots, like Datapilot site */
+  .deco { position: fixed; pointer-events: none; user-select: none; z-index: 0; }
+  .deco-top-right    { top: -40px;   right: -60px;  width: 280px; transform: rotate(20deg); opacity: 0.85; }
+  .deco-bottom-left  { bottom: 80px; left: -40px;   width: 200px; transform: rotate(-15deg); opacity: 0.75; }
+  .deco-mid-right    { top: 45%;     right: -90px;  width: 220px; transform: rotate(35deg); opacity: 0.6; }
+  .deco-bottom-right { bottom: 130px; right: 5%;    width: 110px; opacity: 0.7; }
+  .deco-top-left     { top: 200px;   left: -30px;   width: 130px; opacity: 0.55; }
 
   .wrap, .sticky-total, .confirm-screen { position: relative; z-index: 1; }
   .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
@@ -419,12 +413,12 @@
 </head>
 <body>
 
-<!-- Brand element decorations -->
-<img src="./brand-elements/leaves-multi.png" class="deco deco-1" alt="">
-<img src="./brand-elements/leaves-yellow.png" class="deco deco-2" alt="">
-<img src="./brand-elements/swirl-teal.png" class="deco deco-3" alt="">
-<img src="./brand-elements/dots-teal.png" class="deco deco-4" alt="">
-<img src="./brand-elements/flower-pink.png" class="deco deco-5" alt="">
+<!-- Brand element decorations - placed like DataPilot website accents -->
+<img src="./brand-elements/leaves-multi.png" class="deco deco-top-right" alt="">
+<img src="./brand-elements/leaves-yellow.png" class="deco deco-bottom-left" alt="">
+<img src="./brand-elements/swirl-teal.png" class="deco deco-mid-right" alt="">
+<img src="./brand-elements/flower-pink.png" class="deco deco-bottom-right" alt="">
+<img src="./brand-elements/dots-teal.png" class="deco deco-top-left" alt="">
 
 <div id="main-app" class="wrap">
 
