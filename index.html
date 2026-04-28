@@ -414,11 +414,11 @@
 <body>
 
 <!-- Brand element decorations - placed like DataPilot website accents -->
-<!-- <img src="./brand-elements/leaves-multi.png" class="deco deco-top-right" alt="">
+<img src="./brand-elements/leaves-multi.png" class="deco deco-top-right" alt="">
 <img src="./brand-elements/leaves-yellow.png" class="deco deco-bottom-left" alt="">
 <img src="./brand-elements/swirl-teal.png" class="deco deco-mid-right" alt="">
 <img src="./brand-elements/flower-pink.png" class="deco deco-bottom-right" alt="">
-<img src="./brand-elements/dots-teal.png" class="deco deco-top-left" alt=""> -->
+<img src="./brand-elements/dots-teal.png" class="deco deco-top-left" alt="">
 
 <div id="main-app" class="wrap">
 
@@ -429,9 +429,9 @@
       <h1>Weekly Timesheet</h1>
       <p>
         Submit every Friday for the full work week (Monday → Friday). Smallest unit: <b>0.0625 days = 30 min</b>
-        (0.125 = 1h, 0.25 = 2h, 0.5 = half day, 1 = full day). Total must equal <b>5 days</b>.
-        If less than 5 then gap auto-fills <b>Production interne</b>. If more than 5 days then submission is blocked.
-        Resubmit anytime, latest overrides previous for the same week.
+        (0.125 = 1h, 0.25 = 2h, 0.5 = half day, 1 = full day). Standard week = <b>5 days</b>.
+        If less than 5 — gap auto-fills <b>Production interne</b>. If more than 5 — you'll see a warning but can still submit (overtime is recorded).
+        Resubmit anytime — latest overrides previous for the same week.
       </p>
     </div>
   </header>
@@ -819,8 +819,8 @@
     if (manual > TARGET + 0.0001) {
       manualEl.classList.add("total-err");
       grandEl.classList.add("total-err");
-      errMsg.textContent = `Total exceeds 5 days (${formatNum(manual)}). Reduce entries to submit.`;
-      submitBtn.disabled = true;
+      errMsg.textContent = `Heads up — you've logged ${formatNum(manual)} days, more than the standard 5. You can still submit if intended.`;
+      submitBtn.disabled = false;
     } else if (Math.abs(manual - TARGET) < 0.0001) {
       manualEl.classList.add("total-ok");
       grandEl.classList.add("total-ok");
@@ -999,7 +999,15 @@
       }
     }
 
-    // Compute auto-fill
+    // Warn if over 5 days (soft warning, not a block)
+    if (manual > 5.0001) {
+      const over = manual - 5;
+      if (!confirm(`You've logged ${formatNum(manual)} days — that's ${formatNum(over)} day(s) over the standard 5-day week. Submit anyway?`)) {
+        return;
+      }
+    }
+
+    // Compute auto-fill (only when under 5)
     const auto = Math.max(0, TARGET - manual);
     if (auto > 0) {
       data.entries.push({ category: "Non-billing", project: "", taskOrActivity: "Production interne (auto)", days: auto });
@@ -1047,7 +1055,7 @@
       const isOver = data.manualTotal > TARGET;
       const isAuto = !isOver && data.autoFill > 0;
       document.getElementById("confirm-title").textContent = isOver
-        ? "Submitted, but over 5 days"
+        ? "Submitted with overtime"
         : isAuto
           ? "Submitted with auto-balance"
           : "Timesheet submitted";
