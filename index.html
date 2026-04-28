@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Weekly Timesheet — DataPilot</title>
+<title>Timesheet — DataPilot</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -413,12 +413,12 @@
 </head>
 <body>
 
-<!-- Brand element decorations - placed like DataPilot website accents -->
+<!-- <!-- Brand element decorations - placed like DataPilot website accents -->
 <img src="./brand-elements/leaves-multi.png" class="deco deco-top-right" alt="">
 <img src="./brand-elements/leaves-yellow.png" class="deco deco-bottom-left" alt="">
 <img src="./brand-elements/swirl-teal.png" class="deco deco-mid-right" alt="">
 <img src="./brand-elements/flower-pink.png" class="deco deco-bottom-right" alt="">
-<img src="./brand-elements/dots-teal.png" class="deco deco-top-left" alt="">
+<img src="./brand-elements/dots-teal.png" class="deco deco-top-left" alt=""> -->
 
 <div id="main-app" class="wrap">
 
@@ -440,7 +440,7 @@
 
     <!-- IDENTITY -->
     <div class="card">
-      <h2>Who & when <span id="draft-indicator" class="draft-badge" style="display:none">Draft saved — <span id="clear-draft-btn" style="text-decoration: underline">clear</span></span></h2>
+      <h2>Who & when <span id="draft-indicator" class="draft-badge" style="display:none">Draft saved · <span id="clear-draft-btn" style="text-decoration: underline">clear</span></span></h2>
       <div class="row-grid">
         <div>
           <label for="email">Email *</label>
@@ -561,7 +561,7 @@
       <span class="val" id="manualTotal">0</span>
     </div>
     <div class="stat">
-      <span class="lbl">Auto → Prod. interne</span>
+      <span class="lbl">Autofilled time (Prod. Interne)</span>
       <span class="val" id="autoFill">5</span>
     </div>
     <div class="stat">
@@ -639,7 +639,7 @@
   weekInput.addEventListener("change", () => {
     const d = new Date(weekInput.value + "T00:00:00");
     if (d.getDay() !== 1) {
-      document.getElementById("weekErr").textContent = "Please pick a Monday — the week start must be a Monday.";
+      document.getElementById("weekErr").textContent = "The week start must be a Monday. Please pick a Monday from the calendar.";
       // Snap to nearest previous Monday
       const offset = d.getDay() === 0 ? -6 : 1 - d.getDay();
       d.setDate(d.getDate() + offset);
@@ -726,7 +726,7 @@
       const td = document.createElement("td");
       const inp = document.createElement("input");
       inp.type = "number";
-      inp.min = "0"; inp.max = "5"; inp.step = STEP;
+      inp.min = "0"; inp.step = STEP;
       inp.dataset.kind = "billing";
       inp.dataset.project = project.name;
       inp.dataset.task = t;
@@ -754,7 +754,7 @@
       const inputTd = document.createElement("td");
       const inp = document.createElement("input");
       inp.type = "number";
-      inp.min = "0"; inp.max = "5"; inp.step = STEP;
+      inp.min = "0"; inp.step = STEP;
       inp.dataset.kind = kind;
       inp.dataset.activity = activity;
       inp.addEventListener("input", onChange);
@@ -819,7 +819,7 @@
     if (manual > TARGET + 0.0001) {
       manualEl.classList.add("total-err");
       grandEl.classList.add("total-err");
-      errMsg.textContent = `Heads up — you've logged ${formatNum(manual)} days, more than the standard 5. You can still submit if intended.`;
+      errMsg.textContent = `Total of ${formatNum(manual)} days exceeds the standard 5. Submitting will record this as overtime.`;
       submitBtn.disabled = false;
     } else if (Math.abs(manual - TARGET) < 0.0001) {
       manualEl.classList.add("total-ok");
@@ -1002,7 +1002,7 @@
     // Warn if over 5 days (soft warning, not a block)
     if (manual > 5.0001) {
       const over = manual - 5;
-      if (!confirm(`You've logged ${formatNum(manual)} days — that's ${formatNum(over)} day(s) over the standard 5-day week. Submit anyway?`)) {
+      if (!confirm(`This timesheet totals ${formatNum(manual)} days, which is ${formatNum(over)} day(s) above the standard 5-day week. The extra time will be recorded as overtime. Confirm submission?`)) {
         return;
       }
     }
@@ -1059,14 +1059,14 @@
         : isAuto
           ? "Submitted with auto-balance"
           : "Timesheet submitted";
-      document.getElementById("confirm-sub").textContent = `Week of ${data.weekStart} — ${formatNum(data.manualTotal + data.autoFill)} day(s) total. Recap email on its way.`;
+      document.getElementById("confirm-sub").textContent = `Week of ${data.weekStart}: ${formatNum(data.manualTotal + data.autoFill)} day(s) total. Recap email on its way.`;
     }
 
     const tbl = document.getElementById("confirm-summary");
     let html = '<thead><tr><th>Category</th><th>Project / Activity</th><th style="text-align:right">Days</th></tr></thead><tbody>';
     data.entries.forEach(en => {
       const isAutoRow = en.taskOrActivity && en.taskOrActivity.indexOf("(auto)") !== -1;
-      const detail = en.project ? `${en.project} — ${en.taskOrActivity}` : en.taskOrActivity;
+      const detail = en.project ? `${en.project} · ${en.taskOrActivity}` : en.taskOrActivity;
       html += `<tr class="${isAutoRow ? 'auto' : ''}"><td>${en.category}</td><td>${detail}</td><td style="text-align:right">${formatNum(en.days)}</td></tr>`;
     });
     if (data.nextWfh) html += `<tr><td>WFH next week</td><td colspan="2">${data.nextWfh}</td></tr>`;
