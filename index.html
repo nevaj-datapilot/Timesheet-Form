@@ -35,7 +35,26 @@
     color: var(--text);
     padding: 0 0 140px 0;
     font-weight: 400;
+    position: relative;
+    overflow-x: hidden;
   }
+
+  /* Brand element decorations — fixed in viewport, low opacity, behind content */
+  body::before, body::after,
+  .deco { pointer-events: none; }
+  .deco {
+    position: fixed;
+    z-index: 0;
+    opacity: 0.07;
+    user-select: none;
+  }
+  .deco-1 { top: -60px; right: -80px; width: 320px; transform: rotate(15deg); }
+  .deco-2 { bottom: 200px; left: -100px; width: 280px; transform: rotate(-25deg); }
+  .deco-3 { top: 40%; right: -120px; width: 360px; transform: rotate(45deg); }
+  .deco-4 { top: 30%; left: -50px; width: 200px; }
+  .deco-5 { bottom: 0; right: 10%; width: 240px; transform: rotate(-10deg); }
+
+  .wrap, .sticky-total, .confirm-screen { position: relative; z-index: 1; }
   .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
 
   /* HEADER */
@@ -385,6 +404,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   @media (max-width: 700px) {
+    .deco { display: none; }
     header.top { flex-direction: column; text-align: center; padding: 24px 16px; }
     header.top img.logo { height: 48px; }
     .row-grid { grid-template-columns: 1fr; }
@@ -398,6 +418,13 @@
 </style>
 </head>
 <body>
+
+<!-- Brand element decorations -->
+<img src="./brand-elements/leaves-multi.png" class="deco deco-1" alt="">
+<img src="./brand-elements/leaves-yellow.png" class="deco deco-2" alt="">
+<img src="./brand-elements/swirl-teal.png" class="deco deco-3" alt="">
+<img src="./brand-elements/dots-teal.png" class="deco deco-4" alt="">
+<img src="./brand-elements/flower-pink.png" class="deco deco-5" alt="">
 
 <div id="main-app" class="wrap">
 
@@ -423,11 +450,8 @@
       <div class="row-grid">
         <div>
           <label for="email">Email *</label>
-          <input type="email" id="email" name="email" required placeholder="you@datapilot.fr">
-        </div>
-        <div>
-          <label for="name">Your name</label>
-          <input type="text" id="name" name="name" placeholder="Marie Dupont">
+          <input type="email" id="email" name="email" required placeholder="you@datapilot.fr" pattern="[a-zA-Z0-9._%+\-]+@datapilot\.fr$" title="Email must end with @datapilot.fr">
+          <div id="emailErr" class="err-msg" style="text-align:left"></div>
         </div>
         <div>
           <label for="weekStart">Start of current week (Monday only) *</label>
@@ -603,7 +627,6 @@
   // =========================================================
   const params = new URLSearchParams(window.location.search);
   if (params.get("email")) document.getElementById("email").value = params.get("email");
-  if (params.get("name")) document.getElementById("name").value = params.get("name");
 
   // =========================================================
   // DEFAULT WEEK = CURRENT MONDAY (and force Monday-only)
@@ -874,6 +897,24 @@
   document.getElementById("email").addEventListener("change", restoreDraft);
   document.getElementById("weekStart").addEventListener("change", restoreDraft);
 
+  // Email domain validation
+  const emailInput = document.getElementById("email");
+  const emailErr = document.getElementById("emailErr");
+  function validateEmail() {
+    const v = emailInput.value.trim();
+    if (!v) { emailErr.textContent = ""; return true; }
+    if (!/^[a-zA-Z0-9._%+\-]+@datapilot\.fr$/i.test(v)) {
+      emailErr.textContent = "Email must end with @datapilot.fr";
+      return false;
+    }
+    emailErr.textContent = "";
+    return true;
+  }
+  emailInput.addEventListener("blur", validateEmail);
+  emailInput.addEventListener("input", () => {
+    if (emailErr.textContent) validateEmail();
+  });
+
   // =========================================================
   // COLLECT / APPLY FORM DATA
   // =========================================================
@@ -901,7 +942,6 @@
     const nextLeave = Array.from(document.querySelectorAll('input[name="nextLeave"]:checked')).map(c => c.value).join(",");
     return {
       email: document.getElementById("email").value,
-      name: document.getElementById("name").value,
       weekStart: document.getElementById("weekStart").value,
       nextWfh,
       nextLeave,
@@ -911,7 +951,6 @@
   }
 
   function applyFormData(data) {
-    if (data.name) document.getElementById("name").value = data.name;
     if (data.comments) document.getElementById("comments").value = data.comments;
     if (data.nextWfh) {
       data.nextWfh.split(",").forEach(v => {
@@ -948,6 +987,14 @@
     e.preventDefault();
     const submitBtn = document.getElementById("submitBtn");
     const errMsg = document.getElementById("errMsg");
+
+    // Validate email domain first
+    if (!validateEmail()) {
+      emailInput.focus();
+      errMsg.textContent = "Please use a valid @datapilot.fr email address.";
+      return;
+    }
+
     const data = collectFormData();
 
     // Warn on total = 0
