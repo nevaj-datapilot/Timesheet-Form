@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataPilot Forms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0F2A3D;
+    --navy-dark: #081826;
+    --teal: #3FA6B8;
+    --amber: #F5A623;
+    --amber-soft: #FFE4B5;
+    --pink: #D87B89;
+    --bg: #FFFCF5;
+    --card: #FFFFFF;
+    --border: #EAE6DA;
+    --muted: #6B7280;
+    --text: #1A1A1A;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-weight: 400;
+    position: relative;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Brand element decorations */
+  .deco { position: fixed; pointer-events: none; user-select: none; z-index: 0; }
+  .deco-top-right    { top: -60px;   right: -80px;  width: 320px; transform: rotate(20deg); opacity: 0.85; }
+  .deco-bottom-left  { bottom: 40px;  left: -50px;  width: 240px; transform: rotate(-15deg); opacity: 0.75; }
+  .deco-mid-right    { top: 50%;     right: -100px; width: 240px; transform: rotate(35deg); opacity: 0.55; }
+  .deco-top-left     { top: 100px;   left: -30px;   width: 140px; opacity: 0.6; }
+
+  .wrap { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 60px 24px 40px 24px; flex: 1; width: 100%; }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  .header img.logo {
+    height: 64px;
+    width: auto;
+    margin-bottom: 20px;
+  }
+  .header .eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--amber);
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .header h1 {
+    margin: 0 0 12px 0;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: -1px;
+  }
+  .header p {
+    margin: 0 auto;
+    max-width: 480px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  /* FORM CARDS GRID */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  .form-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+  .form-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(15, 42, 61, 0.12);
+    border-color: var(--teal);
+  }
+  .form-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--amber);
+    transition: width 0.2s ease;
+  }
+  .form-card:hover::before {
+    width: 6px;
+  }
+
+  .form-card .icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+    font-size: 28px;
+  }
+  .form-card .icon-timesheet { background: rgba(63, 166, 184, 0.12); color: var(--teal); }
+  .form-card .icon-supplies  { background: rgba(245, 166, 35, 0.15); color: var(--amber); }
+
+  .form-card h2 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: -0.3px;
+  }
+  .form-card p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--muted);
+    flex: 1;
+  }
+  .form-card .arrow {
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--teal);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .form-card .arrow svg {
+    transition: transform 0.2s ease;
+  }
+  .form-card:hover .arrow svg {
+    transform: translateX(4px);
+  }
+
+  /* FOOTER */
+  .footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 24px 16px 32px 16px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.6px;
+  }
+  .footer .dot { color: var(--amber); margin: 0 6px; }
+
+  @media (max-width: 700px) {
+    .deco { display: none; }
+    .wrap { padding: 40px 18px 30px 18px; }
+    .header { margin-bottom: 36px; }
+    .header h1 { font-size: 28px; }
+    .header p { font-size: 14px; }
+    .form-card { padding: 24px 22px; }
+    .form-card h2 { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Brand decorations -->
+<img src="./brand-elements/leaves-multi.png" class="deco deco-top-right" alt="">
+<img src="./brand-elements/leaves-yellow.png" class="deco deco-bottom-left" alt="">
+<img src="./brand-elements/swirl-teal.png" class="deco deco-mid-right" alt="">
+<img src="./brand-elements/dots-teal.png" class="deco deco-top-left" alt="">
+
+<div class="wrap">
+
+  <div class="header">
+    <img src="./Datapilot_logo.png" alt="DataPilot" class="logo">
+    <div class="eyebrow">Internal forms</div>
+    <h1>What can we help you with?</h1>
+    <p>Pick a form below to submit a weekly timesheet, request office supplies, or manage other internal tasks.</p>
+  </div>
+
+  <div class="cards-grid">
+
+    <a href="./Timesheet.html" class="form-card">
+      <div class="icon icon-timesheet">
+        <!-- Calendar / clock icon -->
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+          <path d="M12 14v3l2 1"></path>
+        </svg>
+      </div>
+      <h2>Weekly Timesheet</h2>
+      <p>Log how you spent the work week across projects, internal time, and time off. Submit every Friday.</p>
+      <span class="arrow">
+        Open form
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </span>
+    </a>
+
+    <a href="./Supplies.html" class="form-card">
+      <div class="icon icon-supplies">
+        <!-- Box / package icon -->
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+      </div>
+      <h2>Office Supplies Request</h2>
+      <p>Need something for the office? Request items, the office manager will be notified and follow up.</p>
+      <span class="arrow">
+        Open form
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </span>
+    </a>
+
+  </div>
+
+</div>
+
+<div class="footer">
+  DATAPILOT <span class="dot">&middot;</span> Internal forms
+</div>
+
+</body>
+</html>
