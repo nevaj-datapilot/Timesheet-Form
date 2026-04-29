@@ -132,6 +132,64 @@
   .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* CUSTOM ENTRIES */
+  .custom-section { margin-top: 12px; padding: 16px; background: var(--sub-bg); border: 1px dashed var(--border); border-radius: 10px; }
+  .custom-section h3 { margin: 0 0 12px 0; font-size: 13px; font-weight: 600; color: var(--navy); text-transform: uppercase; letter-spacing: 0.6px; }
+  .custom-section .hint { margin: 0 0 14px 0; }
+  .custom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 110px 36px;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: center;
+  }
+  .custom-row input[type="text"] {
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+  }
+  .custom-row input[type="number"] {
+    padding: 8px 4px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .custom-row input::placeholder { color: #B5B5B5; font-style: italic; }
+  .custom-row button.del {
+    background: white;
+    border: 1px solid var(--border);
+    color: var(--red);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0;
+    width: 36px; height: 36px;
+    border-radius: 6px;
+    font-weight: 700;
+    transition: all 0.15s;
+  }
+  .custom-row button.del:hover { background: var(--red-bg); border-color: var(--red); }
+  .add-custom-btn {
+    background: white;
+    border: 1px dashed var(--teal);
+    color: var(--teal);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    width: 100%;
+  }
+  .add-custom-btn:hover { background: #E0F2F4; }
+  .custom-row-headers { display: grid; grid-template-columns: 1fr 1fr 110px 36px; gap: 8px; margin-bottom: 6px; padding: 0 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); font-weight: 600; }
+
   @media (max-width: 700px) {
     .deco { display: none; }
     header.top { flex-direction: column; text-align: center; padding: 24px 16px; }
@@ -143,6 +201,8 @@
     .sticky-total .inner { grid-template-columns: 1fr 1fr; gap: 10px; }
     .stat .val { font-size: 18px; }
     button.submit-btn { grid-column: span 2; padding: 12px; }
+    .custom-row, .custom-row-headers { grid-template-columns: 1fr 1fr 80px 36px; gap: 6px; }
+    .custom-row input { font-size: 12px; padding: 6px 8px; }
   }
 </style>
 </head>
@@ -197,6 +257,19 @@
             <tr class="loading-row"><td colspan="9"><span class="spinner"></span>Loading projects from Google Sheet…</td></tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="custom-section">
+        <h3>Custom / Other entries</h3>
+        <p class="hint">For project work that isn't on the master list above. Add as many rows as you need. Each row records one project and one task.</p>
+        <div class="custom-row-headers">
+          <span>Project name</span>
+          <span>Task / activity</span>
+          <span style="text-align:center">Days</span>
+          <span></span>
+        </div>
+        <div id="custom-rows"></div>
+        <button type="button" class="add-custom-btn" id="add-custom-btn">+ Add custom row</button>
       </div>
     </div>
 
@@ -307,8 +380,8 @@
 
   // Non-billing items: { name, hint } — hint shows as small grey text under the label
   const NON_BILLING = [
-    { name: "Formations",          hint: "Weekly Training, Soft Skills..." },
-    { name: "Production interne",  hint: "Dashboard interne, Documentation interne, training intern..." },
+    { name: "Formations",          hint: "Weekly Training, Soft Skills" },
+    { name: "Production interne",  hint: "Dashboard interne, Documentation interne, training intern" },
     { name: "Avant-vente",         hint: "" },
     { name: "Coordination d'équipe", hint: "" },
     { name: "Event Committee",     hint: "" }
@@ -484,6 +557,38 @@
   buildSimpleList("timeoff-body", TIME_OFF, "timeoff");
   loadProjects();
 
+  // =========================================================
+  // CUSTOM ROWS
+  // =========================================================
+  let customRowSeq = 0;
+
+  function addCustomRow(project, task, days) {
+    customRowSeq++;
+    const id = "custom-" + customRowSeq;
+    const wrap = document.createElement("div");
+    wrap.className = "custom-row";
+    wrap.dataset.rowid = id;
+    wrap.innerHTML = `
+      <input type="text" data-kind="custom-project" placeholder="e.g. Internal R&D, Onboarding…" maxlength="80">
+      <input type="text" data-kind="custom-task" placeholder="e.g. Documentation, Veille…" maxlength="80">
+      <input type="number" data-kind="custom-days" min="0" step="${STEP}" placeholder="0">
+      <button type="button" class="del" title="Remove this row">×</button>
+    `;
+    document.getElementById("custom-rows").appendChild(wrap);
+
+    if (project) wrap.querySelector('input[data-kind="custom-project"]').value = project;
+    if (task) wrap.querySelector('input[data-kind="custom-task"]').value = task;
+    if (days != null) wrap.querySelector('input[data-kind="custom-days"]').value = days;
+
+    wrap.querySelector('button.del').addEventListener("click", () => {
+      wrap.remove();
+      onChange();
+    });
+    wrap.querySelectorAll('input').forEach(i => i.addEventListener("input", onChange));
+  }
+
+  document.getElementById("add-custom-btn").addEventListener("click", () => addCustomRow());
+
   document.querySelectorAll('.checkbox-row input[type="checkbox"]').forEach(cb => {
     cb.addEventListener("change", () => {
       cb.parentElement.classList.toggle("checked", cb.checked);
@@ -507,6 +612,11 @@
       manual += rowSum;
     });
     document.querySelectorAll('input[data-kind="nonbilling"], input[data-kind="timeoff"]').forEach(inp => {
+      const v = parseFloat(inp.value);
+      if (!isNaN(v)) manual += v;
+    });
+    // Custom rows
+    document.querySelectorAll('#custom-rows input[data-kind="custom-days"]').forEach(inp => {
       const v = parseFloat(inp.value);
       if (!isNaN(v)) manual += v;
     });
@@ -588,6 +698,7 @@
       document.querySelectorAll('input[type="number"]').forEach(i => i.value = "");
       document.querySelectorAll('input[type="checkbox"]').forEach(c => { c.checked = false; c.parentElement.classList.remove("checked"); });
       document.getElementById("comments").value = "";
+      document.getElementById("custom-rows").innerHTML = "";
       recalc();
     }
   });
@@ -632,6 +743,22 @@
         entries.push({ category: "Off", project: "", taskOrActivity: inp.dataset.activity, days: v });
       }
     });
+    // Custom rows: project name auto-prefixed with [CUSTOM]
+    document.querySelectorAll('#custom-rows .custom-row').forEach(row => {
+      const projectName = (row.querySelector('input[data-kind="custom-project"]').value || '').trim();
+      const taskName = (row.querySelector('input[data-kind="custom-task"]').value || '').trim();
+      const days = parseFloat(row.querySelector('input[data-kind="custom-days"]').value);
+      if (isNaN(days) || days <= 0) return;
+      // Need at least project OR task for the row to be meaningful
+      if (!projectName && !taskName) return;
+      entries.push({
+        category: "Billing",
+        project: projectName ? "[CUSTOM] " + projectName : "[CUSTOM]",
+        taskOrActivity: taskName || "(unspecified)",
+        days: days,
+        custom: true
+      });
+    });
     const nextWfh = Array.from(document.querySelectorAll('input[name="nextWfh"]:checked')).map(c => c.value).join(",");
     const nextLeave = Array.from(document.querySelectorAll('input[name="nextLeave"]:checked')).map(c => c.value).join(",");
     return {
@@ -646,6 +773,9 @@
 
   function applyFormData(data) {
     if (data.comments) document.getElementById("comments").value = data.comments;
+    // Clear existing custom rows so we don't duplicate when restoring
+    const customContainer = document.getElementById("custom-rows");
+    if (customContainer) customContainer.innerHTML = "";
     if (data.nextWfh) {
       data.nextWfh.split(",").forEach(v => {
         const cb = document.querySelector(`input[name="nextWfh"][value="${v}"]`);
@@ -659,7 +789,12 @@
       });
     }
     (data.entries || []).forEach(en => {
-      if (en.category === "Billing") {
+      if (en.category === "Billing" && en.custom) {
+        // Custom row: strip [CUSTOM] prefix when restoring to input
+        const projectName = (en.project || '').replace(/^\[CUSTOM\]\s*/, '');
+        const taskName = en.taskOrActivity === '(unspecified)' ? '' : en.taskOrActivity;
+        addCustomRow(projectName, taskName, en.days);
+      } else if (en.category === "Billing") {
         const inp = document.querySelector(`input[data-kind="billing"][data-project="${cssEscape(en.project)}"][data-task="${cssEscape(en.taskOrActivity)}"]`);
         if (inp) inp.value = en.days;
       } else if (en.category === "Non-billing") {
