@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Office Supplies Request · DataPilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0F2A3D;
+    --navy-dark: #081826;
+    --teal: #3FA6B8;
+    --teal-light: #5BC0D2;
+    --amber: #F5A623;
+    --amber-soft: #FFE4B5;
+    --pink: #D87B89;
+    --bg: #FFFCF5;
+    --card: #FFFFFF;
+    --border: #EAE6DA;
+    --muted: #6B7280;
+    --text: #1A1A1A;
+    --green: #16A34A;
+    --green-bg: #DCFCE7;
+    --red: #DC2626;
+    --red-bg: #FEE2E2;
+    --sub-bg: #F7F4EB;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 0 0 80px 0;
+    font-weight: 400;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Brand element decorations */
+  .deco { position: fixed; pointer-events: none; user-select: none; z-index: 0; }
+  .deco-top-right    { top: -40px;   right: -60px;  width: 280px; transform: rotate(20deg); opacity: 0.85; }
+  .deco-bottom-left  { bottom: 40px; left: -40px;   width: 200px; transform: rotate(-15deg); opacity: 0.75; }
+  .deco-mid-right    { top: 45%;     right: -90px;  width: 220px; transform: rotate(35deg); opacity: 0.55; }
+
+  .wrap, .confirm-screen { position: relative; z-index: 1; }
+  .wrap { max-width: 800px; margin: 0 auto; padding: 24px 16px; }
+
+  /* HEADER */
+  header.top {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
+    color: white;
+    padding: 32px 28px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    box-shadow: 0 4px 16px rgba(15, 42, 61, 0.15);
+  }
+  header.top img.logo { height: 56px; width: auto; flex-shrink: 0; }
+  header.top .header-text h1 {
+    margin: 0 0 6px 0;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  header.top .header-text p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    opacity: 0.85;
+    font-weight: 300;
+  }
+  header.top .header-text b { color: var(--amber); font-weight: 600; }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .card h2 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card h2::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    background: var(--amber);
+    border-radius: 2px;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  input[type="email"], input[type="text"], input[type="number"], textarea, select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: white;
+    transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(63, 166, 184, 0.15);
+  }
+
+  .hint { font-size: 12px; color: var(--muted); font-style: italic; margin: 0 0 12px 0; }
+
+  /* ITEM ROWS */
+  .item-row {
+    background: var(--sub-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .item-row .item-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .item-row .item-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--teal);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .item-row button.del {
+    background: white;
+    border: 1px solid var(--border);
+    color: var(--red);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0;
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    font-weight: 700;
+    transition: all 0.15s;
+  }
+  .item-row button.del:hover { background: var(--red-bg); border-color: var(--red); }
+  .item-row .field-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .item-row .field-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  /* URGENCY radio buttons */
+  .urgency-row { display: flex; gap: 8px; }
+  .urgency-row label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: white;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--navy);
+    font-size: 12px;
+    margin-bottom: 0;
+    transition: all 0.15s;
+  }
+  .urgency-row label:hover { background: #F0F7FA; border-color: var(--teal); }
+  .urgency-row label.checked-low    { background: #DCFCE7; border-color: var(--green); color: #14532D; font-weight: 600; }
+  .urgency-row label.checked-normal { background: #DBEAFE; border-color: #2563EB; color: #1E40AF; font-weight: 600; }
+  .urgency-row label.checked-urgent { background: var(--red-bg); border-color: var(--red); color: #7F1D1D; font-weight: 600; }
+  .urgency-row input[type="radio"] { width: 14px; height: 14px; cursor: pointer; accent-color: var(--teal); margin: 0; }
+
+  .add-item-btn {
+    background: white;
+    border: 1px dashed var(--teal);
+    color: var(--teal);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    width: 100%;
+  }
+  .add-item-btn:hover { background: #E0F2F4; }
+
+  /* SUBMIT */
+  .submit-area {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .submit-summary {
+    flex: 1;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .submit-summary b { color: var(--navy); }
+  button.submit-btn {
+    background: var(--amber);
+    color: var(--navy);
+    border: 0;
+    padding: 14px 32px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    transition: all 0.15s;
+    box-shadow: 0 2px 8px rgba(245, 166, 35, 0.3);
+  }
+  button.submit-btn:hover { background: #E5961F; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245, 166, 35, 0.4); }
+  button.submit-btn:disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; box-shadow: none; transform: none; }
+
+  .err-msg { color: var(--red); font-size: 12px; min-height: 16px; font-weight: 500; }
+
+  /* CONFIRM */
+  .confirm-screen { display: none; background: white; border-radius: 16px; padding: 40px; margin: 24px auto; max-width: 700px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+  .confirm-screen.active { display: block; }
+  .confirm-screen .check { width: 72px; height: 72px; border-radius: 50%; background: var(--green-bg); color: var(--green); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px; font-weight: 700; }
+  .confirm-screen.error .check { background: var(--red-bg); color: var(--red); }
+  .confirm-screen h2 { text-align: center; color: var(--navy); margin: 0 0 8px 0; font-size: 24px; font-weight: 700; }
+  .confirm-screen .sub { text-align: center; color: var(--muted); margin-bottom: 24px; font-size: 14px; }
+  .confirm-screen table.summary { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 24px; }
+  .confirm-screen table.summary th { background: var(--navy); color: white; padding: 10px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .confirm-screen table.summary td { padding: 10px; border-bottom: 1px solid var(--border); }
+  .confirm-screen .actions { display: flex; gap: 12px; justify-content: center; }
+  .confirm-screen button { padding: 12px 24px; border-radius: 10px; font-family: inherit; font-weight: 600; cursor: pointer; border: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .confirm-screen .btn-primary { background: var(--amber); color: var(--navy); }
+  .confirm-screen .btn-secondary { background: white; color: var(--navy); border: 2px solid var(--navy); }
+
+  @media (max-width: 700px) {
+    .deco { display: none; }
+    header.top { flex-direction: column; text-align: center; padding: 24px 16px; }
+    header.top img.logo { height: 48px; }
+    .item-row .field-grid { grid-template-columns: 1fr; }
+    .item-row .field-grid-2 { grid-template-columns: 1fr; }
+    .urgency-row label { font-size: 11px; padding: 8px 6px; }
+    .submit-area { flex-direction: column; align-items: stretch; }
+    .submit-summary { text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Brand element decorations -->
+<img src="./brand-elements/leaves-multi.png" class="deco deco-top-right" alt="">
+<img src="./brand-elements/leaves-yellow.png" class="deco deco-bottom-left" alt="">
+<img src="./brand-elements/swirl-teal.png" class="deco deco-mid-right" alt="">
+
+<div id="main-app" class="wrap">
+
+  <header class="top">
+    <img src="./Datapilot_logo.png" alt="DataPilot" class="logo">
+    <div class="header-text">
+      <h1>Office Supplies Request</h1>
+      <p>
+        Need something for the office? Submit a request below and the office manager will get back to you. You can request <b>multiple items at once</b> using the "+ Add another item" button.
+      </p>
+    </div>
+  </header>
+
+  <form id="supplies-form" autocomplete="off">
+
+    <div class="card">
+      <h2>Your details</h2>
+      <label for="email">Email *</label>
+      <input type="email" id="email" name="email" required placeholder="you@datapilot.fr" pattern="[a-zA-Z0-9._%+\-]+@datapilot\.fr$" title="Email must end with @datapilot.fr">
+      <div id="emailErr" class="err-msg"></div>
+    </div>
+
+    <div class="card">
+      <h2>Items requested</h2>
+      <p class="hint">Add one row per item. Each item can have its own quantity, urgency, and notes.</p>
+      <div id="items-container"></div>
+      <button type="button" class="add-item-btn" id="add-item-btn">+ Add another item</button>
+    </div>
+
+    <div class="submit-area">
+      <div class="submit-summary" id="submitSummary">No items added yet</div>
+      <button type="submit" class="submit-btn" id="submitBtn">Submit Request</button>
+    </div>
+    <div class="err-msg" id="errMsg" style="text-align:right; margin-top: 8px;"></div>
+
+  </form>
+</div>
+
+<!-- CONFIRMATION SCREEN -->
+<div id="confirm-screen" class="confirm-screen">
+  <div class="check" id="confirm-check">OK</div>
+  <h2 id="confirm-title">Request submitted</h2>
+  <p class="sub" id="confirm-sub">Your request has been recorded and the office manager has been notified.</p>
+  <table class="summary" id="confirm-summary"></table>
+  <div class="actions">
+    <button class="btn-secondary" id="btn-edit">Submit another request</button>
+  </div>
+</div>
+
+<datalist id="common-items">
+  <option value="Notebook">
+  <option value="Pens (black)">
+  <option value="Pens (blue)">
+  <option value="Pens (red)">
+  <option value="Sticky notes">
+  <option value="Markers / whiteboard markers">
+  <option value="Coffee">
+  <option value="Tea">
+  <option value="Sugar">
+  <option value="Snacks">
+  <option value="Toilet paper">
+  <option value="Hand soap">
+  <option value="Paper towels">
+  <option value="Printer paper">
+  <option value="Printer ink / toner">
+  <option value="Cleaning supplies">
+  <option value="Batteries (AA)">
+  <option value="Batteries (AAA)">
+  <option value="USB cable">
+  <option value="USB-C adapter">
+  <option value="Mouse">
+  <option value="Keyboard">
+  <option value="Headphones">
+</datalist>
+
+<script>
+  // =========================================================
+  // CONFIG
+  // =========================================================
+  const APPS_SCRIPT_URL = "https://script.google.com/a/macros/datapilot.fr/s/AKfycbyUhfW211pozOYRKOJBZM9vCcRLxDhmsm3OShM1F_1SV2HWaqpg253ekKdu75xZYiWR/exec";
+
+  // =========================================================
+  // PRE-FILL FROM QUERY STRING (e.g., ?email=...)
+  // =========================================================
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("email")) document.getElementById("email").value = params.get("email");
+
+  // =========================================================
+  // EMAIL VALIDATION
+  // =========================================================
+  const emailInput = document.getElementById("email");
+  const emailErr = document.getElementById("emailErr");
+  function validateEmail() {
+    const v = emailInput.value.trim();
+    if (!v) { emailErr.textContent = ""; return true; }
+    if (!/^[a-zA-Z0-9._%+\-]+@datapilot\.fr$/i.test(v)) {
+      emailErr.textContent = "Email must end with @datapilot.fr";
+      return false;
+    }
+    emailErr.textContent = "";
+    return true;
+  }
+  emailInput.addEventListener("blur", validateEmail);
+  emailInput.addEventListener("input", () => {
+    if (emailErr.textContent) validateEmail();
+  });
+
+  // =========================================================
+  // ITEM ROWS
+  // =========================================================
+  let itemSeq = 0;
+
+  function addItemRow() {
+    itemSeq++;
+    const id = "item-" + itemSeq;
+    const wrap = document.createElement("div");
+    wrap.className = "item-row";
+    wrap.dataset.itemid = id;
+    wrap.innerHTML = `
+      <div class="item-row-header">
+        <span class="item-num">Item ${document.querySelectorAll('.item-row').length + 1}</span>
+        <button type="button" class="del" title="Remove this item">&times;</button>
+      </div>
+
+      <div class="field-grid">
+        <div>
+          <label>Item name *</label>
+          <input type="text" data-field="item" list="common-items" placeholder="Pick an item or type a new one..." maxlength="120" autocomplete="off" required>
+        </div>
+        <div>
+          <label>Quantity *</label>
+          <input type="number" data-field="quantity" min="1" step="1" value="1" required>
+        </div>
+        <div>
+          <label>Urgency *</label>
+          <div class="urgency-row" data-itemid="${id}">
+            <label class="checked-normal"><input type="radio" name="urgency-${id}" value="Low"> Low</label>
+            <label><input type="radio" name="urgency-${id}" value="Normal" checked> Normal</label>
+            <label><input type="radio" name="urgency-${id}" value="Urgent"> Urgent</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-grid-2">
+        <div>
+          <label>Where to buy (optional)</label>
+          <input type="text" data-field="whereToBuy" placeholder="Amazon, nearest store..." maxlength="100">
+        </div>
+        <div>
+          <label>Estimated cost (optional)</label>
+          <input type="text" data-field="estimatedCost" placeholder="~30€" maxlength="40">
+        </div>
+      </div>
+
+      <div>
+        <label>Reason / notes (optional)</label>
+        <textarea data-field="reason" rows="2" placeholder="Why is this needed? Any specs?"></textarea>
+      </div>
+    `;
+    document.getElementById("items-container").appendChild(wrap);
+
+    // Set initial state of urgency radios
+    syncUrgencyVisuals(wrap);
+
+    // Wire delete
+    wrap.querySelector('button.del').addEventListener("click", () => {
+      wrap.remove();
+      renumberItems();
+      updateSummary();
+    });
+
+    // Wire urgency radio visual feedback
+    wrap.querySelectorAll('.urgency-row input[type="radio"]').forEach(r => {
+      r.addEventListener("change", () => syncUrgencyVisuals(wrap));
+    });
+
+    // Item name + qty trigger summary update
+    wrap.querySelectorAll('input[data-field], textarea[data-field]').forEach(i => {
+      i.addEventListener("input", updateSummary);
+    });
+
+    updateSummary();
+    return wrap;
+  }
+
+  function syncUrgencyVisuals(rowEl) {
+    const labels = rowEl.querySelectorAll('.urgency-row label');
+    labels.forEach(l => {
+      l.classList.remove('checked-low', 'checked-normal', 'checked-urgent');
+    });
+    const checkedRadio = rowEl.querySelector('.urgency-row input[type="radio"]:checked');
+    if (!checkedRadio) return;
+    const v = checkedRadio.value;
+    const lbl = checkedRadio.parentElement;
+    if (v === 'Low') lbl.classList.add('checked-low');
+    else if (v === 'Normal') lbl.classList.add('checked-normal');
+    else if (v === 'Urgent') lbl.classList.add('checked-urgent');
+  }
+
+  function renumberItems() {
+    document.querySelectorAll('.item-row .item-num').forEach((el, i) => {
+      el.textContent = `Item ${i + 1}`;
+    });
+  }
+
+  function updateSummary() {
+    const rows = document.querySelectorAll('.item-row');
+    const validRows = Array.from(rows).filter(r => {
+      const itemName = (r.querySelector('input[data-field="item"]').value || '').trim();
+      return itemName.length > 0;
+    });
+    const sum = document.getElementById("submitSummary");
+    if (validRows.length === 0) {
+      sum.textContent = "No items added yet";
+    } else if (validRows.length === 1) {
+      sum.innerHTML = `Ready to submit <b>1 item</b>`;
+    } else {
+      sum.innerHTML = `Ready to submit <b>${validRows.length} items</b>`;
+    }
+  }
+
+  document.getElementById("add-item-btn").addEventListener("click", () => {
+    addItemRow();
+  });
+
+  // Add the first row on page load
+  addItemRow();
+
+  // =========================================================
+  // COLLECT FORM DATA
+  // =========================================================
+  function collectFormData() {
+    const items = [];
+    document.querySelectorAll('.item-row').forEach(row => {
+      const item = (row.querySelector('input[data-field="item"]').value || '').trim();
+      if (!item) return;
+      const quantity = parseInt(row.querySelector('input[data-field="quantity"]').value, 10) || 1;
+      const urgency = (row.querySelector('.urgency-row input[type="radio"]:checked') || {}).value || 'Normal';
+      const whereToBuy = (row.querySelector('input[data-field="whereToBuy"]').value || '').trim();
+      const estimatedCost = (row.querySelector('input[data-field="estimatedCost"]').value || '').trim();
+      const reason = (row.querySelector('textarea[data-field="reason"]').value || '').trim();
+      items.push({ item, quantity, urgency, whereToBuy, estimatedCost, reason });
+    });
+    return {
+      email: document.getElementById("email").value.trim(),
+      items: items,
+      submittedAt: new Date().toISOString()
+    };
+  }
+
+  // =========================================================
+  // SUBMIT
+  // =========================================================
+  document.getElementById("supplies-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const submitBtn = document.getElementById("submitBtn");
+    const errMsg = document.getElementById("errMsg");
+
+    if (!validateEmail()) {
+      emailInput.focus();
+      errMsg.textContent = "Please use a valid @datapilot.fr email address.";
+      return;
+    }
+
+    const data = collectFormData();
+    if (data.items.length === 0) {
+      errMsg.textContent = "Please add at least one item with a name.";
+      return;
+    }
+    errMsg.textContent = "";
+
+    // Tag this payload as a supplies request so the Apps Script knows what to do
+    data.formType = "supplies";
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Submitting…";
+
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(data)
+      });
+      showConfirmation(data, false);
+    } catch (err) {
+      showConfirmation(data, true, err.message);
+    } finally {
+      submitBtn.textContent = "Submit Request";
+      submitBtn.disabled = false;
+    }
+  });
+
+  // =========================================================
+  // CONFIRMATION SCREEN
+  // =========================================================
+  function showConfirmation(data, isError, errText) {
+    document.getElementById("main-app").style.display = "none";
+    const screen = document.getElementById("confirm-screen");
+    screen.classList.add("active");
+    screen.classList.toggle("error", !!isError);
+
+    document.getElementById("confirm-check").textContent = isError ? "!" : "OK";
+    if (isError) {
+      document.getElementById("confirm-title").textContent = "Submission failed";
+      document.getElementById("confirm-sub").textContent = "Please try again. Error: " + (errText || "network");
+    } else {
+      const n = data.items.length;
+      document.getElementById("confirm-title").textContent = n === 1 ? "Request submitted" : `${n} requests submitted`;
+      document.getElementById("confirm-sub").textContent = "The office manager has been notified by email and will follow up.";
+    }
+
+    const tbl = document.getElementById("confirm-summary");
+    let html = '<thead><tr><th>Item</th><th style="text-align:center">Qty</th><th>Urgency</th></tr></thead><tbody>';
+    data.items.forEach(it => {
+      html += `<tr><td><b>${escapeHtml(it.item)}</b>${it.reason ? `<br><span style="color:#6B7280;font-size:11px">${escapeHtml(it.reason)}</span>` : ''}</td><td style="text-align:center">${it.quantity}</td><td>${escapeHtml(it.urgency)}</td></tr>`;
+    });
+    html += '</tbody>';
+    tbl.innerHTML = html;
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, ch => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[ch]));
+  }
+
+  document.getElementById("btn-edit").addEventListener("click", () => {
+    location.reload();
+  });
+</script>
+</body>
+</html>
