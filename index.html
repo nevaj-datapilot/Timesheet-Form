@@ -133,9 +133,20 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* CUSTOM ENTRIES */
-  .custom-section { margin-top: 12px; padding: 16px; background: var(--sub-bg); border: 1px dashed var(--border); border-radius: 10px; }
-  .custom-section h3 { margin: 0 0 12px 0; font-size: 13px; font-weight: 600; color: var(--navy); text-transform: uppercase; letter-spacing: 0.6px; }
-  .custom-section .hint { margin: 0 0 14px 0; }
+  .adhoc-divider {
+    background: var(--navy-dark);
+    color: white;
+    padding: 8px 14px;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+    border-radius: 4px 4px 0 0;
+    margin-top: 16px;
+    margin-bottom: 0;
+  }
+  .custom-section { margin-top: 0; padding: 16px; background: var(--sub-bg); border: 1px dashed var(--border); border-radius: 0 0 10px 10px; }
   .custom-row {
     display: grid;
     grid-template-columns: 1fr 1fr 110px 36px;
@@ -190,6 +201,103 @@
   .add-custom-btn:hover { background: #E0F2F4; }
   .custom-row-headers { display: grid; grid-template-columns: 1fr 1fr 110px 36px; gap: 8px; margin-bottom: 6px; padding: 0 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); font-weight: 600; }
 
+  /* PROJECT DROPDOWN PANEL */
+  .project-dropdown {
+    position: fixed;
+    background: white;
+    border: 1px solid var(--navy);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(15, 42, 61, 0.18);
+    z-index: 1000;
+    max-width: 480px;
+    overflow: hidden;
+  }
+  .project-dropdown-list {
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+  .project-dropdown-list::-webkit-scrollbar { width: 8px; }
+  .project-dropdown-list::-webkit-scrollbar-track { background: transparent; }
+  .project-dropdown-list::-webkit-scrollbar-thumb { background: #D4D4D4; border-radius: 4px; }
+  .project-dropdown-header {
+    padding: 8px 14px 4px 14px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    background: white;
+    position: sticky;
+    top: 0;
+  }
+  .project-dropdown-header.collapsible {
+    cursor: pointer;
+    user-select: none;
+    padding-top: 10px;
+    padding-bottom: 6px;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+  }
+  .project-dropdown-header.collapsible:hover { color: var(--navy); }
+  .project-dropdown-header .caret {
+    display: inline-block;
+    transition: transform 0.15s;
+    font-size: 9px;
+    margin-right: 4px;
+  }
+  .project-dropdown-header.expanded .caret { transform: rotate(90deg); }
+  .project-dropdown-item {
+    padding: 8px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text);
+    border-left: 3px solid transparent;
+  }
+  .project-dropdown-item:hover,
+  .project-dropdown-item.keyboard-active {
+    background: #F0F7FA;
+    border-left-color: var(--teal);
+  }
+  .project-dropdown-item.is-inactive { opacity: 0.65; }
+  .project-dropdown-item.is-inactive:hover { opacity: 1; }
+  .project-dropdown-item .project-text { flex: 1; min-width: 0; word-break: break-word; }
+  .project-dropdown-item .project-text mark {
+    background: #FFE4B5;
+    color: var(--navy);
+    font-weight: 600;
+    padding: 0 1px;
+    border-radius: 2px;
+  }
+  .project-dropdown-item .project-dot {
+    flex-shrink: 0;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+  .project-dropdown-item .project-dot.dot-sprint { background: var(--teal); }
+  .project-dropdown-item .project-dot.dot-regie { background: var(--amber); }
+  .project-dropdown-item .inactive-badge {
+    flex-shrink: 0;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--border);
+    color: var(--muted);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .project-dropdown-empty {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--muted);
+    font-style: italic;
+    text-align: center;
+  }
+
   @media (max-width: 700px) {
     .deco { display: none; }
     header.top { flex-direction: column; text-align: center; padding: 24px 16px; }
@@ -203,6 +311,8 @@
     button.submit-btn { grid-column: span 2; padding: 12px; }
     .custom-row, .custom-row-headers { grid-template-columns: 1fr 1fr 80px 36px; gap: 6px; }
     .custom-row input { font-size: 12px; padding: 6px 8px; }
+    .project-dropdown { max-width: calc(100vw - 32px); }
+    .project-dropdown-list { max-height: 280px; }
   }
 </style>
 </head>
@@ -259,9 +369,11 @@
         </table>
       </div>
 
+      <!-- Ad-hoc divider — same visual style as Sprint/Régies dividers -->
+      <div class="adhoc-divider">Ad-hoc</div>
+
       <div class="custom-section">
-        <h3>Custom / Other entries</h3>
-        <p class="hint">For project work that isn't on the master list above. Add as many rows as you need. Each row records one project and one task.</p>
+        <p class="hint">For project work that isn't on the master list above, or quick logs. Pick a project from the dropdown or type a new one. Each row records one project and one task.</p>
         <div class="custom-row-headers">
           <span>Project name</span>
           <span>Task / activity</span>
@@ -269,7 +381,7 @@
           <span></span>
         </div>
         <div id="custom-rows"></div>
-        <button type="button" class="add-custom-btn" id="add-custom-btn">+ Add custom row</button>
+        <button type="button" class="add-custom-btn" id="add-custom-btn">+ Add row</button>
       </div>
     </div>
 
@@ -380,11 +492,11 @@
 
   // Non-billing items: { name, hint } — hint shows as small grey text under the label
   const NON_BILLING = [
-    { name: "Formations",          hint: "Weekly Training, Soft Skills" },
-    { name: "Production interne",  hint: "Dashboard interne, Documentation interne, training intern" },
+    { name: "Formations",          hint: "Weekly Training, Soft Skills..." },
+    { name: "Production interne",  hint: "Dashboard interne, Documentation interne, training intern..." },
     { name: "Avant-vente",         hint: "" },
     { name: "Coordination d'équipe", hint: "" },
-    { name: "Event Committee",     hint: "" }
+    { name: "Research and Development",     hint: "" }
   ];
   const TIME_OFF = [
     { name: "Planned leave",  hint: "" },
@@ -413,6 +525,7 @@
   const AUTOFILL_LABEL = "Autre (auto)";
 
   let PROJECTS = [];
+  let ALL_PROJECTS = [];
 
   const params = new URLSearchParams(window.location.search);
   if (params.get("email")) document.getElementById("email").value = params.get("email");
@@ -444,22 +557,228 @@
   async function loadProjects() {
     if (APPS_SCRIPT_URL.startsWith("PASTE")) {
       PROJECTS = FALLBACK_PROJECTS;
+      ALL_PROJECTS = FALLBACK_PROJECTS.slice();
       buildBilling();
       return;
     }
     try {
-      const resp = await fetch(APPS_SCRIPT_URL + "?action=projects", { method: "GET" });
-      const data = await resp.json();
-      if (data.ok && Array.isArray(data.projects) && data.projects.length > 0) {
-        PROJECTS = data.projects;
-      } else {
-        PROJECTS = FALLBACK_PROJECTS;
-      }
+      const [activeResp, allResp] = await Promise.all([
+        fetch(APPS_SCRIPT_URL + "?action=projects", { method: "GET" }),
+        fetch(APPS_SCRIPT_URL + "?action=allProjects", { method: "GET" })
+      ]);
+      const activeData = await activeResp.json();
+      const allData = await allResp.json();
+      PROJECTS = (activeData.ok && Array.isArray(activeData.projects) && activeData.projects.length > 0)
+        ? activeData.projects : FALLBACK_PROJECTS;
+      ALL_PROJECTS = (allData.ok && Array.isArray(allData.projects) && allData.projects.length > 0)
+        ? allData.projects : PROJECTS.slice();
     } catch (err) {
       PROJECTS = FALLBACK_PROJECTS;
+      ALL_PROJECTS = FALLBACK_PROJECTS.slice();
     }
     buildBilling();
   }
+
+  // ============================================================
+  // CUSTOM DROPDOWN — branded, styled, supports filter + groups
+  // ============================================================
+  const dropdownState = {
+    panel: null,
+    input: null,
+    activeOpenSection: 'active',   // 'active' or 'inactive'
+    inactiveExpanded: false,
+    keyIndex: -1,                  // for keyboard nav
+    visibleItems: []
+  };
+
+  function ensureDropdownPanel() {
+    if (dropdownState.panel) return dropdownState.panel;
+    const panel = document.createElement('div');
+    panel.className = 'project-dropdown';
+    panel.style.display = 'none';
+    panel.innerHTML = `
+      <div class="project-dropdown-list" role="listbox"></div>
+    `;
+    document.body.appendChild(panel);
+
+    // Click outside closes it
+    document.addEventListener('mousedown', (e) => {
+      if (panel.style.display === 'none') return;
+      if (panel.contains(e.target)) return;
+      if (e.target === dropdownState.input) return;
+      closeDropdown();
+    });
+    // Escape closes it
+    document.addEventListener('keydown', (e) => {
+      if (panel.style.display === 'none') return;
+      if (e.key === 'Escape') {
+        closeDropdown();
+      }
+    });
+    dropdownState.panel = panel;
+    return panel;
+  }
+
+  function openDropdown(input) {
+    const panel = ensureDropdownPanel();
+    dropdownState.input = input;
+    dropdownState.inactiveExpanded = false;
+    dropdownState.keyIndex = -1;
+    positionDropdown();
+    renderDropdown('');
+    panel.style.display = 'block';
+  }
+
+  function closeDropdown() {
+    if (dropdownState.panel) dropdownState.panel.style.display = 'none';
+    dropdownState.input = null;
+    dropdownState.keyIndex = -1;
+  }
+
+  function positionDropdown() {
+    if (!dropdownState.input || !dropdownState.panel) return;
+    const rect = dropdownState.input.getBoundingClientRect();
+    const panel = dropdownState.panel;
+    panel.style.position = 'fixed';
+    panel.style.top = (rect.bottom + 4) + 'px';
+    panel.style.left = rect.left + 'px';
+    panel.style.width = Math.max(rect.width, 320) + 'px';
+  }
+
+  function renderDropdown(filter) {
+    const panel = dropdownState.panel;
+    const list = panel.querySelector('.project-dropdown-list');
+    list.innerHTML = '';
+    const term = (filter || '').toLowerCase().trim();
+
+    const matches = (p) => !term || p.name.toLowerCase().indexOf(term) !== -1;
+
+    const active = ALL_PROJECTS.filter(p => p.active !== false && matches(p))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const inactive = ALL_PROJECTS.filter(p => p.active === false && matches(p))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    dropdownState.visibleItems = [];
+
+    if (active.length === 0 && inactive.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'project-dropdown-empty';
+      empty.textContent = term
+        ? `No matches. "${term}" will be saved as a new custom project.`
+        : 'No projects available.';
+      list.appendChild(empty);
+      return;
+    }
+
+    if (active.length > 0) {
+      const header = document.createElement('div');
+      header.className = 'project-dropdown-header';
+      header.textContent = `Active (${active.length})`;
+      list.appendChild(header);
+      active.forEach(p => list.appendChild(buildItem(p, term)));
+    }
+
+    if (inactive.length > 0) {
+      const sectionHeader = document.createElement('div');
+      sectionHeader.className = 'project-dropdown-header collapsible' + (dropdownState.inactiveExpanded ? ' expanded' : '');
+      sectionHeader.innerHTML = `<span class="caret">▸</span> Inactive (${inactive.length})`;
+      sectionHeader.addEventListener('click', () => {
+        dropdownState.inactiveExpanded = !dropdownState.inactiveExpanded;
+        renderDropdown(dropdownState.input.value);
+      });
+      list.appendChild(sectionHeader);
+      if (dropdownState.inactiveExpanded || term) {
+        inactive.forEach(p => list.appendChild(buildItem(p, term)));
+      }
+    }
+  }
+
+  function buildItem(p, term) {
+    const item = document.createElement('div');
+    item.className = 'project-dropdown-item';
+    if (p.active === false) item.classList.add('is-inactive');
+    item.dataset.projectName = p.name;
+
+    const dot = document.createElement('span');
+    dot.className = 'project-dot ' + (p.type === 'regie' ? 'dot-regie' : 'dot-sprint');
+    item.appendChild(dot);
+
+    const text = document.createElement('span');
+    text.className = 'project-text';
+    text.innerHTML = highlightMatch(p.name, term);
+    item.appendChild(text);
+
+    if (p.active === false) {
+      const badge = document.createElement('span');
+      badge.className = 'inactive-badge';
+      badge.textContent = 'inactive';
+      item.appendChild(badge);
+    }
+
+    item.addEventListener('mousedown', (e) => {
+      e.preventDefault();   // keep focus on the input
+      if (dropdownState.input) {
+        dropdownState.input.value = p.name;
+        dropdownState.input.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      closeDropdown();
+    });
+
+    dropdownState.visibleItems.push(item);
+    return item;
+  }
+
+  function highlightMatch(text, term) {
+    if (!term) return escapeForHtml(text);
+    const lower = text.toLowerCase();
+    const idx = lower.indexOf(term);
+    if (idx === -1) return escapeForHtml(text);
+    return escapeForHtml(text.slice(0, idx)) +
+      '<mark>' + escapeForHtml(text.slice(idx, idx + term.length)) + '</mark>' +
+      escapeForHtml(text.slice(idx + term.length));
+  }
+
+  function escapeForHtml(s) {
+    return String(s).replace(/[&<>"]/g, ch => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[ch]));
+  }
+
+  function handleDropdownKeyboardNav(e) {
+    if (!dropdownState.panel || dropdownState.panel.style.display === 'none') return;
+    const items = dropdownState.visibleItems;
+    if (items.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      dropdownState.keyIndex = (dropdownState.keyIndex + 1) % items.length;
+      updateActiveItem();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      dropdownState.keyIndex = (dropdownState.keyIndex - 1 + items.length) % items.length;
+      updateActiveItem();
+    } else if (e.key === 'Enter') {
+      if (dropdownState.keyIndex >= 0 && items[dropdownState.keyIndex]) {
+        e.preventDefault();
+        items[dropdownState.keyIndex].dispatchEvent(new Event('mousedown'));
+      }
+    }
+  }
+
+  function updateActiveItem() {
+    dropdownState.visibleItems.forEach((it, i) => {
+      it.classList.toggle('keyboard-active', i === dropdownState.keyIndex);
+      if (i === dropdownState.keyIndex) {
+        it.scrollIntoView({ block: 'nearest' });
+      }
+    });
+  }
+
+  // Reposition on window scroll/resize while open
+  window.addEventListener('scroll', () => {
+    if (dropdownState.panel && dropdownState.panel.style.display !== 'none') positionDropdown();
+  }, true);
+  window.addEventListener('resize', () => {
+    if (dropdownState.panel && dropdownState.panel.style.display !== 'none') positionDropdown();
+  });
 
   function buildBilling() {
     const tbody = document.getElementById("billing-body");
@@ -569,10 +888,10 @@
     wrap.className = "custom-row";
     wrap.dataset.rowid = id;
     wrap.innerHTML = `
-      <input type="text" data-kind="custom-project" placeholder="e.g. Internal R&D, Onboarding…" maxlength="80">
-      <input type="text" data-kind="custom-task" placeholder="e.g. Documentation, Veille…" maxlength="80">
+      <input type="text" data-kind="custom-project" placeholder="Pick a project or type a new one..." maxlength="120" autocomplete="off">
+      <input type="text" data-kind="custom-task" placeholder="e.g. Documentation, Veille..." maxlength="80" autocomplete="off">
       <input type="number" data-kind="custom-days" min="0" step="${STEP}" placeholder="0">
-      <button type="button" class="del" title="Remove this row">×</button>
+      <button type="button" class="del" title="Remove this row">&times;</button>
     `;
     document.getElementById("custom-rows").appendChild(wrap);
 
@@ -585,6 +904,20 @@
       onChange();
     });
     wrap.querySelectorAll('input').forEach(i => i.addEventListener("input", onChange));
+
+    // Wire the custom dropdown to the project field
+    const projInput = wrap.querySelector('input[data-kind="custom-project"]');
+    projInput.addEventListener('focus', () => openDropdown(projInput));
+    projInput.addEventListener('click', () => openDropdown(projInput));
+    projInput.addEventListener('input', () => {
+      if (dropdownState.input === projInput) {
+        dropdownState.keyIndex = -1;
+        renderDropdown(projInput.value);
+      }
+    });
+    projInput.addEventListener('keydown', (e) => {
+      if (dropdownState.input === projInput) handleDropdownKeyboardNav(e);
+    });
   }
 
   document.getElementById("add-custom-btn").addEventListener("click", () => addCustomRow());
@@ -743,17 +1076,26 @@
         entries.push({ category: "Off", project: "", taskOrActivity: inp.dataset.activity, days: v });
       }
     });
-    // Custom rows: project name auto-prefixed with [CUSTOM]
+    // Ad-hoc rows: prefix with [CUSTOM] only if the project name isn't an existing one
     document.querySelectorAll('#custom-rows .custom-row').forEach(row => {
       const projectName = (row.querySelector('input[data-kind="custom-project"]').value || '').trim();
       const taskName = (row.querySelector('input[data-kind="custom-task"]').value || '').trim();
       const days = parseFloat(row.querySelector('input[data-kind="custom-days"]').value);
       if (isNaN(days) || days <= 0) return;
-      // Need at least project OR task for the row to be meaningful
       if (!projectName && !taskName) return;
+      // If project matches an existing one (active or inactive), keep it as-is. Otherwise prefix with [CUSTOM].
+      const existsInMaster = ALL_PROJECTS.some(p => p.name === projectName);
+      let storedProject;
+      if (!projectName) {
+        storedProject = "[CUSTOM]";
+      } else if (existsInMaster) {
+        storedProject = projectName;
+      } else {
+        storedProject = "[CUSTOM] " + projectName;
+      }
       entries.push({
         category: "Billing",
-        project: projectName ? "[CUSTOM] " + projectName : "[CUSTOM]",
+        project: storedProject,
         taskOrActivity: taskName || "(unspecified)",
         days: days,
         custom: true
