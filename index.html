@@ -16,7 +16,7 @@
     --amber: #F5A623;
     --amber-soft: #FFE4B5;
     --pink: #D87B89;
-    --bg: #FFFCF5;          /* warm cream like Datapilot site */
+    --bg: #FFFCF5;
     --card: #FFFFFF;
     --border: #EAE6DA;
     --muted: #6B7280;
@@ -39,362 +39,97 @@
     position: relative;
     overflow-x: hidden;
   }
-
-  /* Brand element decorations — full-opacity accents in specific spots, like Datapilot site */
   .deco { position: fixed; pointer-events: none; user-select: none; z-index: 0; }
   .deco-top-right    { top: -40px;   right: -60px;  width: 280px; transform: rotate(20deg); opacity: 0.85; }
   .deco-bottom-left  { bottom: 80px; left: -40px;   width: 200px; transform: rotate(-15deg); opacity: 0.75; }
   .deco-mid-right    { top: 45%;     right: -90px;  width: 220px; transform: rotate(35deg); opacity: 0.6; }
   .deco-bottom-right { bottom: 130px; right: 5%;    width: 110px; opacity: 0.7; }
   .deco-top-left     { top: 200px;   left: -30px;   width: 130px; opacity: 0.55; }
-
   .wrap, .sticky-total, .confirm-screen { position: relative; z-index: 1; }
   .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
 
-  /* HEADER */
   header.top {
     background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
-    color: white;
-    padding: 32px 28px;
-    border-radius: 16px;
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 24px;
+    color: white; padding: 32px 28px; border-radius: 16px;
+    margin-bottom: 24px; display: flex; align-items: center; gap: 24px;
     box-shadow: 0 4px 16px rgba(15, 42, 61, 0.15);
   }
   header.top img.logo { height: 64px; width: auto; flex-shrink: 0; }
-  header.top .header-text h1 {
-    margin: 0 0 6px 0;
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-  }
-  header.top .header-text p {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.5;
-    opacity: 0.85;
-    font-weight: 300;
-  }
+  header.top .header-text h1 { margin: 0 0 6px 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  header.top .header-text p { margin: 0; font-size: 13px; line-height: 1.5; opacity: 0.85; font-weight: 300; }
   header.top .header-text b { color: var(--amber); font-weight: 600; }
 
-  /* CARDS */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 22px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }
-  .card h2 {
-    margin: 0 0 16px 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--navy);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .card h2::before {
-    content: '';
-    display: inline-block;
-    width: 4px;
-    height: 18px;
-    background: var(--amber);
-    border-radius: 2px;
-  }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .card h2 { margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: var(--navy); display: flex; align-items: center; gap: 10px; }
+  .card h2::before { content: ''; display: inline-block; width: 4px; height: 18px; background: var(--amber); border-radius: 2px; }
 
-  /* INPUTS */
-  label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    margin-bottom: 5px;
-    color: var(--navy);
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-  }
+  label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: var(--navy); text-transform: uppercase; letter-spacing: 0.4px; }
   input[type="email"], input[type="text"], input[type="date"], input[type="number"], textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 14px;
-    font-family: inherit;
-    background: white;
-    transition: border-color 0.15s;
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 14px; font-family: inherit; background: white; transition: border-color 0.15s;
   }
   input[type="number"] { text-align: center; padding: 6px 4px; font-weight: 500; }
-  input:focus, textarea:focus {
-    outline: none;
-    border-color: var(--teal);
-    box-shadow: 0 0 0 3px rgba(63, 166, 184, 0.15);
-  }
-
+  input:focus, textarea:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(63, 166, 184, 0.15); }
   .row-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
 
-  /* TABLE */
-  table.timesheet {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
-  table.timesheet thead th {
-    background: var(--navy);
-    color: white;
-    padding: 10px 6px;
-    font-weight: 600;
-    text-align: center;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+  table.timesheet { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.timesheet thead th { background: var(--navy); color: white; padding: 10px 6px; font-weight: 600; text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
   table.timesheet thead th.first { text-align: left; padding-left: 14px; min-width: 240px; }
-  table.timesheet td {
-    border: 1px solid var(--border);
-    padding: 4px;
-    background: white;
-  }
-  table.timesheet td.label {
-    background: var(--sub-bg);
-    padding: 10px 14px;
-    font-size: 13px;
-    color: var(--navy);
-    font-weight: 500;
-    border-left: 3px solid var(--teal);
-  }
-  table.timesheet td.label.regie {
-    background: var(--regie-bg);
-    border-left-color: var(--amber);
-  }
-  table.timesheet td.row-total {
-    background: var(--amber-soft);
-    font-weight: 600;
-    text-align: center;
-    color: var(--navy);
-  }
-  table.timesheet input[type="number"] {
-    border: none;
-    background: transparent;
-    width: 100%;
-    min-width: 50px;
-    color: var(--navy);
-  }
-  table.timesheet input[type="number"]:focus {
-    background: #FFFBEB;
-    outline: 1px solid var(--teal);
-    border-radius: 4px;
-  }
+  table.timesheet td { border: 1px solid var(--border); padding: 4px; background: white; }
+  table.timesheet td.label { background: var(--sub-bg); padding: 10px 14px; font-size: 13px; color: var(--navy); font-weight: 500; border-left: 3px solid var(--teal); }
+  table.timesheet td.label.regie { background: var(--regie-bg); border-left-color: var(--amber); }
+  table.timesheet td.label .hint-text { display: block; font-size: 11px; font-weight: 400; color: var(--muted); font-style: italic; margin-top: 2px; }
+  table.timesheet td.row-total { background: var(--amber-soft); font-weight: 600; text-align: center; color: var(--navy); }
+  table.timesheet input[type="number"] { border: none; background: transparent; width: 100%; min-width: 50px; color: var(--navy); }
+  table.timesheet input[type="number"]:focus { background: #FFFBEB; outline: 1px solid var(--teal); border-radius: 4px; }
   table.timesheet tr.has-entry td.label { background: #E0F2F4; border-left-color: var(--teal); }
   table.timesheet tr.has-entry td.label.regie { background: #FFF1D6; border-left-color: var(--amber); }
 
-  /* SECTION DIVIDER ROW */
-  table.timesheet tr.divider td {
-    background: var(--navy-dark);
-    color: white;
-    padding: 8px 14px;
-    font-weight: 600;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    text-align: center;
-  }
+  table.timesheet tr.divider td { background: var(--navy-dark); color: white; padding: 8px 14px; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
 
-  /* CHECKBOXES */
   .checkbox-row { display: flex; gap: 10px; flex-wrap: wrap; }
-  .checkbox-row label {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--sub-bg);
-    padding: 10px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 500;
-    text-transform: none;
-    letter-spacing: 0;
-    color: var(--navy);
-    font-size: 13px;
-    border: 1px solid transparent;
-    transition: all 0.15s;
-  }
+  .checkbox-row label { display: flex; align-items: center; gap: 8px; background: var(--sub-bg); padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--navy); font-size: 13px; border: 1px solid transparent; transition: all 0.15s; }
   .checkbox-row label:hover { background: #DDEEF1; border-color: var(--teal); }
   .checkbox-row label.checked { background: var(--teal); color: white; border-color: var(--teal); }
   .checkbox-row input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--amber); }
 
-  /* HINT */
   .hint { font-size: 12px; color: var(--muted); font-style: italic; margin: 0 0 12px 0; }
 
-  /* STICKY FOOTER */
-  .sticky-total {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: white;
-    border-top: 3px solid var(--amber);
-    box-shadow: 0 -6px 20px rgba(0,0,0,0.08);
-    padding: 14px 24px;
-    z-index: 100;
-  }
-  .sticky-total .inner {
-    max-width: 1100px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto;
-    align-items: center;
-    gap: 24px;
-  }
+  .sticky-total { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 3px solid var(--amber); box-shadow: 0 -6px 20px rgba(0,0,0,0.08); padding: 14px 24px; z-index: 100; }
+  .sticky-total .inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr 1fr auto; align-items: center; gap: 24px; }
   .stat { display: flex; flex-direction: column; gap: 2px; }
-  .stat .lbl {
-    font-size: 10px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
-  }
+  .stat .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
   .stat .val { font-size: 22px; font-weight: 700; color: var(--navy); }
   .total-ok { color: var(--green) !important; }
   .total-warn { color: var(--amber) !important; }
   .total-err { color: var(--red) !important; }
 
-  button.submit-btn {
-    background: var(--amber);
-    color: var(--navy);
-    border: 0;
-    padding: 14px 32px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    transition: all 0.15s;
-    box-shadow: 0 2px 8px rgba(245, 166, 35, 0.3);
-  }
+  button.submit-btn { background: var(--amber); color: var(--navy); border: 0; padding: 14px 32px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; text-transform: uppercase; letter-spacing: 0.8px; transition: all 0.15s; box-shadow: 0 2px 8px rgba(245, 166, 35, 0.3); }
   button.submit-btn:hover { background: #E5961F; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245, 166, 35, 0.4); }
-  button.submit-btn:disabled {
-    background: #E5E7EB;
-    color: #9CA3AF;
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
-  }
+  button.submit-btn:disabled { background: #E5E7EB; color: #9CA3AF; cursor: not-allowed; box-shadow: none; transform: none; }
 
-  .err-msg {
-    color: var(--red);
-    font-size: 12px;
-    text-align: center;
-    padding-top: 6px;
-    min-height: 16px;
-    font-weight: 500;
-  }
-  .warn-banner {
-    background: var(--amber-soft);
-    border-left: 4px solid var(--amber);
-    padding: 10px 16px;
-    border-radius: 6px;
-    color: var(--navy);
-    font-size: 13px;
-    font-weight: 500;
-    margin-bottom: 16px;
-  }
+  .err-msg { color: var(--red); font-size: 12px; text-align: center; padding-top: 6px; min-height: 16px; font-weight: 500; }
+  .warn-banner { background: var(--amber-soft); border-left: 4px solid var(--amber); padding: 10px 16px; border-radius: 6px; color: var(--navy); font-size: 13px; font-weight: 500; margin-bottom: 16px; }
 
-  /* DRAFT BADGE */
-  .draft-badge {
-    display: inline-block;
-    background: var(--amber-soft);
-    color: var(--navy);
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    margin-left: 12px;
-    cursor: pointer;
-  }
+  .draft-badge { display: inline-block; background: var(--amber-soft); color: var(--navy); padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-left: 12px; cursor: pointer; }
 
-  /* CONFIRMATION SCREEN */
-  .confirm-screen {
-    display: none;
-    background: white;
-    border-radius: 16px;
-    padding: 40px;
-    margin: 24px auto;
-    max-width: 800px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
-  }
+  .confirm-screen { display: none; background: white; border-radius: 16px; padding: 40px; margin: 24px auto; max-width: 800px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
   .confirm-screen.active { display: block; }
-  .confirm-screen .check {
-    width: 72px; height: 72px;
-    border-radius: 50%;
-    background: var(--green-bg);
-    color: var(--green);
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 20px;
-    font-size: 40px; font-weight: 700;
-  }
+  .confirm-screen .check { width: 72px; height: 72px; border-radius: 50%; background: var(--green-bg); color: var(--green); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px; font-weight: 700; }
   .confirm-screen.error .check { background: var(--red-bg); color: var(--red); }
-  .confirm-screen h2 {
-    text-align: center;
-    color: var(--navy);
-    margin: 0 0 8px 0;
-    font-size: 24px;
-    font-weight: 700;
-  }
-  .confirm-screen .sub {
-    text-align: center;
-    color: var(--muted);
-    margin-bottom: 24px;
-    font-size: 14px;
-  }
-  .confirm-screen table.summary {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    margin-bottom: 24px;
-  }
-  .confirm-screen table.summary th {
-    background: var(--navy);
-    color: white;
-    padding: 10px;
-    text-align: left;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .confirm-screen table.summary td {
-    padding: 10px;
-    border-bottom: 1px solid var(--border);
-  }
+  .confirm-screen h2 { text-align: center; color: var(--navy); margin: 0 0 8px 0; font-size: 24px; font-weight: 700; }
+  .confirm-screen .sub { text-align: center; color: var(--muted); margin-bottom: 24px; font-size: 14px; }
+  .confirm-screen table.summary { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 24px; }
+  .confirm-screen table.summary th { background: var(--navy); color: white; padding: 10px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .confirm-screen table.summary td { padding: 10px; border-bottom: 1px solid var(--border); }
   .confirm-screen table.summary tr.auto td { background: var(--amber-soft); font-weight: 500; }
-  .confirm-screen .actions {
-    display: flex; gap: 12px; justify-content: center;
-  }
-  .confirm-screen button {
-    padding: 12px 24px;
-    border-radius: 10px;
-    font-family: inherit;
-    font-weight: 600;
-    cursor: pointer;
-    border: 0;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+  .confirm-screen .actions { display: flex; gap: 12px; justify-content: center; }
+  .confirm-screen button { padding: 12px 24px; border-radius: 10px; font-family: inherit; font-weight: 600; cursor: pointer; border: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
   .confirm-screen .btn-primary { background: var(--amber); color: var(--navy); }
   .confirm-screen .btn-secondary { background: white; color: var(--navy); border: 2px solid var(--navy); }
 
-  /* LOADING */
   .loading-row td { text-align: center; padding: 40px; color: var(--muted); font-style: italic; }
-  .spinner {
-    display: inline-block;
-    width: 16px; height: 16px;
-    border: 2px solid var(--border);
-    border-top-color: var(--teal);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    vertical-align: middle;
-    margin-right: 8px;
-  }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   @media (max-width: 700px) {
@@ -413,32 +148,23 @@
 </head>
 <body>
 
-<!-- <!-- Brand element decorations - placed like DataPilot website accents -->
-<!-- <img src="./brand-elements/leaves-multi.png" class="deco deco-top-right" alt="">
-<img src="./brand-elements/leaves-yellow.png" class="deco deco-bottom-left" alt="">
-<img src="./brand-elements/swirl-teal.png" class="deco deco-mid-right" alt="">
-<img src="./brand-elements/flower-pink.png" class="deco deco-bottom-right" alt="">
-<img src="./brand-elements/dots-teal.png" class="deco deco-top-left" alt=""> -->
-
 <div id="main-app" class="wrap">
 
-  <!-- HEADER -->
   <header class="top">
     <img src="./Datapilot_logo.png" alt="DataPilot" class="logo">
     <div class="header-text">
       <h1>Weekly Timesheet</h1>
       <p>
-        Submit every Friday for the full work week (Monday → Friday). Smallest unit: <b>0.0625 days = 30 min</b>
-        (0.125 = 1h, 0.25 = 2h, 0.5 = half day, 1 = full day). Standard week = <b>5 days</b>.
-        If less than 5 then gap auto-fills <b>Production interne</b>. If more than 5 then you'll see a warning but can still submit (overtime is recorded).
-        Resubmit anytime, latest submission overrides previous for the same week.
+        Submit every Friday for the full work week (Monday to Friday). Smallest unit: <b>0.0625 days = 30 min</b>
+        (0.125 = 1h, 0.25 = 2h, 0.5 = half day, 1 = full day). Standard week: <b>5 days</b>.
+        If less than 5, the gap auto-fills <b>Autre</b> (uncategorized). If more than 5, you'll see a warning but can still submit (overtime is recorded).
+        Resubmit anytime, the latest submission overrides the previous one for the same week.
       </p>
     </div>
   </header>
 
   <form id="timesheet-form" autocomplete="off">
 
-    <!-- IDENTITY -->
     <div class="card">
       <h2>Who & when <span id="draft-indicator" class="draft-badge" style="display:none">Draft saved · <span id="clear-draft-btn" style="text-decoration: underline">clear</span></span></h2>
       <div class="row-grid">
@@ -455,7 +181,6 @@
       </div>
     </div>
 
-    <!-- BILLING -->
     <div class="card">
       <h2>Billing time</h2>
       <p class="hint">Sprints in blue, Régies in orange. Fill only the rows where you spent time.</p>
@@ -475,10 +200,9 @@
       </div>
     </div>
 
-    <!-- NON-BILLING -->
     <div class="card">
       <h2>Non-billing time</h2>
-      <p class="hint">Production interne is auto-filled from the gap, so don't enter it here.</p>
+      <p class="hint">Any unlogged time in your week will automatically be recorded under "Autre".</p>
       <table class="timesheet">
         <thead>
           <tr>
@@ -490,7 +214,6 @@
       </table>
     </div>
 
-    <!-- TIME OFF -->
     <div class="card">
       <h2>Time off</h2>
       <table class="timesheet">
@@ -504,7 +227,6 @@
       </table>
     </div>
 
-    <!-- NEXT WEEK PLANNING -->
     <div class="card">
       <h2>Heads-up for next week</h2>
       <p class="hint">Help your team plan ahead. These don't count toward this week's 5 days.</p>
@@ -532,7 +254,6 @@
       </div>
     </div>
 
-    <!-- COMMENTS -->
     <div class="card">
       <h2>Comments (optional)</h2>
       <textarea id="comments" rows="2" placeholder="Anything to flag for this week?"></textarea>
@@ -541,7 +262,6 @@
   </form>
 </div>
 
-<!-- CONFIRMATION SCREEN -->
 <div id="confirm-screen" class="confirm-screen">
   <div class="check" id="confirm-check">OK</div>
   <h2 id="confirm-title">Submitted!</h2>
@@ -553,7 +273,6 @@
   </div>
 </div>
 
-<!-- STICKY FOOTER -->
 <div class="sticky-total" id="sticky-footer">
   <div class="inner">
     <div class="stat">
@@ -561,7 +280,7 @@
       <span class="val" id="manualTotal">0</span>
     </div>
     <div class="stat">
-      <span class="lbl">Autofilled time (Prod. Interne)</span>
+      <span class="lbl">Autofilled time (Autre)</span>
       <span class="val" id="autoFill">5</span>
     </div>
     <div class="stat">
@@ -574,11 +293,7 @@
 </div>
 
 <script>
-  // =========================================================
-  // CONFIG
-  // =========================================================
   const APPS_SCRIPT_URL = "https://script.google.com/a/macros/datapilot.fr/s/AKfycbyUhfW211pozOYRKOJBZM9vCcRLxDhmsm3OShM1F_1SV2HWaqpg253ekKdu75xZYiWR/exec";
-  // Same Apps Script also exposes a GET endpoint that returns project list as JSON
 
   const TASK_TYPES = [
     "Développement",
@@ -588,13 +303,22 @@
     "Point interne",
     "Réunion client",
     "QC"
-    // Add new task types here, e.g. "Tests", "Recette"
   ];
 
-  const NON_BILLING = ["Formations", "Avant-vente", "Coordination d'équipe"];
-  const TIME_OFF = ["Planned leave", "Sick", "Public holiday"];
+  // Non-billing items: { name, hint } — hint shows as small grey text under the label
+  const NON_BILLING = [
+    { name: "Formations",          hint: "Weekly Training, Soft Skills" },
+    { name: "Production interne",  hint: "Dashboard interne, Documentation interne, training intern" },
+    { name: "Avant-vente",         hint: "" },
+    { name: "Coordination d'équipe", hint: "" },
+    { name: "Event Committee",     hint: "" }
+  ];
+  const TIME_OFF = [
+    { name: "Planned leave",  hint: "" },
+    { name: "Sick",           hint: "" },
+    { name: "Public holiday", hint: "" }
+  ];
 
-  // FALLBACK projects if Sheet fetch fails
   const FALLBACK_PROJECTS = [
     { name: "[SPRINT] Forward (ST2)", type: "sprint" },
     { name: "[SPRINT] MàJ C-Care HR Dashboard", type: "sprint" },
@@ -613,18 +337,13 @@
   const STEP = 0.0625;
   const TARGET = 5;
   const DRAFT_KEY_PREFIX = "ts_draft_";
+  const AUTOFILL_LABEL = "Autre (auto)";
 
   let PROJECTS = [];
 
-  // =========================================================
-  // QUERY STRING PRE-FILL
-  // =========================================================
   const params = new URLSearchParams(window.location.search);
   if (params.get("email")) document.getElementById("email").value = params.get("email");
 
-  // =========================================================
-  // DEFAULT WEEK = CURRENT MONDAY (and force Monday-only)
-  // =========================================================
   function getCurrentMondayIso() {
     const today = new Date();
     const day = today.getDay();
@@ -640,7 +359,6 @@
     const d = new Date(weekInput.value + "T00:00:00");
     if (d.getDay() !== 1) {
       document.getElementById("weekErr").textContent = "The week start must be a Monday. Please pick a Monday from the calendar.";
-      // Snap to nearest previous Monday
       const offset = d.getDay() === 0 ? -6 : 1 - d.getDay();
       d.setDate(d.getDate() + offset);
       weekInput.value = d.toISOString().slice(0, 10);
@@ -650,12 +368,8 @@
     }
   });
 
-  // =========================================================
-  // FETCH PROJECT LIST FROM GOOGLE SHEET (via Apps Script GET)
-  // =========================================================
   async function loadProjects() {
     if (APPS_SCRIPT_URL.startsWith("PASTE")) {
-      console.warn("Apps Script URL not configured, using fallback project list.");
       PROJECTS = FALLBACK_PROJECTS;
       buildBilling();
       return;
@@ -669,20 +383,15 @@
         PROJECTS = FALLBACK_PROJECTS;
       }
     } catch (err) {
-      console.warn("Couldn't fetch projects from Sheet, using fallback.", err);
       PROJECTS = FALLBACK_PROJECTS;
     }
     buildBilling();
   }
 
-  // =========================================================
-  // BUILD UI
-  // =========================================================
   function buildBilling() {
     const tbody = document.getElementById("billing-body");
     tbody.innerHTML = "";
 
-    // Update task headers
     const head = document.querySelector("#billing-table thead tr");
     head.innerHTML = '<th class="first">Project</th>' +
       TASK_TYPES.map(t => {
@@ -691,7 +400,6 @@
       }).join('') +
       '<th>Total</th>';
 
-    // Group: Sprints first, then divider, then Régies
     const sprints = PROJECTS.filter(p => p.type === "sprint");
     const regies = PROJECTS.filter(p => p.type === "regie");
 
@@ -710,7 +418,6 @@
       regies.forEach((p, i) => addProjectRow(tbody, p, "regie-" + i));
     }
 
-    // Restore draft if any
     restoreDraft();
     recalc();
   }
@@ -745,18 +452,27 @@
 
   function buildSimpleList(containerId, items, kind) {
     const tbody = document.getElementById(containerId);
-    items.forEach(activity => {
+    items.forEach(item => {
       const tr = document.createElement("tr");
       const labelTd = document.createElement("td");
       labelTd.className = "label";
-      labelTd.textContent = activity;
+      // Build label with optional hint sub-text
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = item.name;
+      labelTd.appendChild(nameSpan);
+      if (item.hint) {
+        const hintSpan = document.createElement("span");
+        hintSpan.className = "hint-text";
+        hintSpan.textContent = item.hint;
+        labelTd.appendChild(hintSpan);
+      }
       tr.appendChild(labelTd);
       const inputTd = document.createElement("td");
       const inp = document.createElement("input");
       inp.type = "number";
       inp.min = "0"; inp.step = STEP;
       inp.dataset.kind = kind;
-      inp.dataset.activity = activity;
+      inp.dataset.activity = item.name;
       inp.addEventListener("input", onChange);
       inputTd.appendChild(inp);
       tr.appendChild(inputTd);
@@ -768,9 +484,6 @@
   buildSimpleList("timeoff-body", TIME_OFF, "timeoff");
   loadProjects();
 
-  // =========================================================
-  // CHECKBOX VISUAL FEEDBACK (this-week WFH + next-week WFH/Leave)
-  // =========================================================
   document.querySelectorAll('.checkbox-row input[type="checkbox"]').forEach(cb => {
     cb.addEventListener("change", () => {
       cb.parentElement.classList.toggle("checked", cb.checked);
@@ -778,15 +491,10 @@
     });
   });
 
-  // =========================================================
-  // RECALC + SAVE DRAFT
-  // =========================================================
   function onChange() { recalc(); saveDraft(); }
 
   function recalc() {
     let manual = 0;
-
-    // Per-row billing totals
     document.querySelectorAll("#billing-body tr[data-rowid]").forEach(tr => {
       const rowId = tr.dataset.rowid;
       let rowSum = 0;
@@ -834,7 +542,7 @@
     } else {
       manualEl.classList.add("total-err");
       grandEl.classList.add("total-ok");
-      errMsg.textContent = manual === 0 ? "" : "";
+      errMsg.textContent = "";
       submitBtn.disabled = false;
     }
   }
@@ -844,9 +552,6 @@
     return parseFloat(n.toFixed(4)).toString();
   }
 
-  // =========================================================
-  // LOCALSTORAGE DRAFTS (per email + week)
-  // =========================================================
   function draftKey() {
     const email = document.getElementById("email").value || "anon";
     const week = document.getElementById("weekStart").value || "noweek";
@@ -858,7 +563,7 @@
     try {
       localStorage.setItem(draftKey(), JSON.stringify(data));
       document.getElementById("draft-indicator").style.display = "inline-block";
-    } catch (e) { /* localStorage unavailable */ }
+    } catch (e) {}
   }
   function restoreDraft() {
     const email = document.getElementById("email").value;
@@ -870,7 +575,7 @@
       const data = JSON.parse(raw);
       applyFormData(data);
       document.getElementById("draft-indicator").style.display = "inline-block";
-    } catch (e) { /* corrupt draft */ }
+    } catch (e) {}
   }
   function clearDraft() {
     try { localStorage.removeItem(draftKey()); } catch (e) {}
@@ -880,7 +585,6 @@
     e.stopPropagation();
     if (confirm("Clear the saved draft for this week? All entered values will be lost.")) {
       clearDraft();
-      // Reset all inputs
       document.querySelectorAll('input[type="number"]').forEach(i => i.value = "");
       document.querySelectorAll('input[type="checkbox"]').forEach(c => { c.checked = false; c.parentElement.classList.remove("checked"); });
       document.getElementById("comments").value = "";
@@ -891,7 +595,6 @@
   document.getElementById("email").addEventListener("change", restoreDraft);
   document.getElementById("weekStart").addEventListener("change", restoreDraft);
 
-  // Email domain validation
   const emailInput = document.getElementById("email");
   const emailErr = document.getElementById("emailErr");
   function validateEmail() {
@@ -909,9 +612,6 @@
     if (emailErr.textContent) validateEmail();
   });
 
-  // =========================================================
-  // COLLECT / APPLY FORM DATA
-  // =========================================================
   function collectFormData() {
     const entries = [];
     document.querySelectorAll('#billing-body input[data-kind="billing"]').forEach(inp => {
@@ -974,15 +674,11 @@
   }
   function cssEscape(s) { return String(s).replace(/(["\\])/g, '\\$1'); }
 
-  // =========================================================
-  // SUBMIT
-  // =========================================================
   document.getElementById("timesheet-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const submitBtn = document.getElementById("submitBtn");
     const errMsg = document.getElementById("errMsg");
 
-    // Validate email domain first
     if (!validateEmail()) {
       emailInput.focus();
       errMsg.textContent = "Please use a valid @datapilot.fr email address.";
@@ -990,16 +686,14 @@
     }
 
     const data = collectFormData();
-
-    // Warn on total = 0
     const manual = data.entries.reduce((a, b) => a + b.days, 0);
+
     if (manual === 0) {
-      if (!confirm("You haven't logged any time. Submitting will record 5 days as Production interne. Continue?")) {
+      if (!confirm("You haven't logged any time. Submitting will record 5 days as Autre (uncategorized). Continue?")) {
         return;
       }
     }
 
-    // Warn if over 5 days (soft warning, not a block)
     if (manual > 5.0001) {
       const over = manual - 5;
       if (!confirm(`This timesheet totals ${formatNum(manual)} days, which is ${formatNum(over)} day(s) above the standard 5-day week. The extra time will be recorded as overtime. Confirm submission?`)) {
@@ -1007,10 +701,9 @@
       }
     }
 
-    // Compute auto-fill (only when under 5)
     const auto = Math.max(0, TARGET - manual);
     if (auto > 0) {
-      data.entries.push({ category: "Non-billing", project: "", taskOrActivity: "Production interne (auto)", days: auto });
+      data.entries.push({ category: "Non-billing", project: "", taskOrActivity: AUTOFILL_LABEL, days: auto });
     }
     data.manualTotal = manual;
     data.autoFill = auto;
@@ -1026,7 +719,6 @@
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(data)
       });
-      // Success — clear draft and show confirmation
       clearDraft();
       showConfirmation(data, false);
     } catch (err) {
@@ -1037,9 +729,6 @@
     }
   });
 
-  // =========================================================
-  // CONFIRMATION SCREEN
-  // =========================================================
   function showConfirmation(data, isError, errText) {
     document.getElementById("main-app").style.display = "none";
     document.getElementById("sticky-footer").style.display = "none";
