@@ -370,7 +370,7 @@
     <div class="card">
       <h2>Your details</h2>
       <label for="email">Email *</label>
-      <input type="email" id="email" name="email" required placeholder="you@datapilot.fr" pattern="[a-zA-Z0-9._%+\-]+@datapilot\.fr$" title="Email must end with @datapilot.fr">
+      <input type="email" id="email" name="email" required placeholder="Pick yourself or type your @datapilot.fr email" pattern="[a-zA-Z0-9._%+\-]+@datapilot\.fr$" title="Email must end with @datapilot.fr" autocomplete="off">
       <div id="emailErr" class="err-msg"></div>
     </div>
 
@@ -406,6 +406,21 @@
   // CONFIG
   // =========================================================
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1H0i6D4MQDG3u4f-iOBmkv1sXiouYQDM1B4IzFCyDgQCExuhbq75gQxuB2w4MXrKk2w/exec";
+
+  // The Timesheet Apps Script (different project) exposes the users endpoint.
+  // Both scripts read the same Sheet, so we just call the timesheet's URL for the user list.
+  const TEAM_EMAILS_URL = "https://script.google.com/a/macros/datapilot.fr/s/AKfycbyUhfW211pozOYRKOJBZM9vCcRLxDhmsm3OShM1F_1SV2HWaqpg253ekKdu75xZYiWR/exec?action=users";
+
+  let TEAM_EMAILS = [];
+
+  // Fetch the team list at page load (best-effort; if it fails, free typing still works)
+  (async () => {
+    try {
+      const resp = await fetch(TEAM_EMAILS_URL, { method: "GET" });
+      const data = await resp.json();
+      if (data.ok && Array.isArray(data.users)) TEAM_EMAILS = data.users;
+    } catch (e) { /* silent fallback */ }
+  })();
 
   // Common items for the dropdown (free typing also allowed)
   const COMMON_ITEMS = [
@@ -455,19 +470,21 @@
     emailErr.textContent = "";
     return true;
   }
-  emailInput.addEventListener("blur", validateEmail);
+  // Slight delay so a click on the dropdown's items can register first
+  emailInput.addEventListener("blur", () => setTimeout(validateEmail, 150));
   emailInput.addEventListener("input", () => {
     if (emailErr.textContent) validateEmail();
   });
 
   // =========================================================
-  // CUSTOM ITEM DROPDOWN — branded, styled, search filter, keyboard nav
+  // CUSTOM DROPDOWN — branded, supports two modes: 'items' and 'emails'
   // =========================================================
   const dropdownState = {
     panel: null,
     input: null,
     keyIndex: -1,
-    visibleItems: []
+    visibleItems: [],
+    dataMode: 'items'   // 'items' or 'emails'
   };
 
   function ensureDropdownPanel() {
@@ -492,12 +509,13 @@
     return panel;
   }
 
-  function openDropdown(input) {
+  function openDropdown(input, mode) {
     const panel = ensureDropdownPanel();
     dropdownState.input = input;
+    dropdownState.dataMode = mode || 'items';
     dropdownState.keyIndex = -1;
     positionDropdown();
-    renderDropdown('');
+    renderDropdown(input.value || '');
     panel.style.display = 'block';
   }
 
@@ -518,6 +536,74 @@
   }
 
   function renderDropdown(filter) {
+    if (dropdownState.dataMode === 'emails') {
+      renderEmailDropdown(filter);
+    } else {
+      renderItemDropdown(filter);
+    }
+  }
+
+  function renderEmailDropdown(filter) {
+    const panel = dropdownState.panel;
+    const list = panel.querySelector('.item-dropdown-list');
+    list.innerHTML = '';
+    const term = (filter || '').toLowerCase().trim();
+
+    const matches = TEAM_EMAILS.filter(e => !term || e.indexOf(term) !== -1);
+
+    dropdownState.visibleItems = [];
+
+    if (TEAM_EMAILS.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'item-dropdown-empty';
+      empty.textContent = 'Team list unavailable. Type your @datapilot.fr email manually.';
+      list.appendChild(empty);
+      return;
+    }
+
+    if (matches.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'item-dropdown-empty';
+      empty.textContent = term
+        ? `No matches for "${term}". You can still submit with your own @datapilot.fr email.`
+        : 'No team members found.';
+      list.appendChild(empty);
+      return;
+    }
+
+    const header = document.createElement('div');
+    header.className = 'item-dropdown-header';
+    header.textContent = `Team (${matches.length})`;
+    list.appendChild(header);
+
+    matches.forEach(email => list.appendChild(buildEmailItem(email, term)));
+  }
+
+  function buildEmailItem(email, term) {
+    const item = document.createElement('div');
+    item.className = 'item-dropdown-item';
+    item.dataset.email = email;
+
+    const text = document.createElement('span');
+    text.className = 'item-text';
+    text.innerHTML = highlightMatch(email, term);
+    item.appendChild(text);
+
+    item.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      if (dropdownState.input) {
+        dropdownState.input.value = email;
+        dropdownState.input.dispatchEvent(new Event('input', { bubbles: true }));
+        dropdownState.input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      closeDropdown();
+    });
+
+    dropdownState.visibleItems.push(item);
+    return item;
+  }
+
+  function renderItemDropdown(filter) {
     const panel = dropdownState.panel;
     const list = panel.querySelector('.item-dropdown-list');
     list.innerHTML = '';
@@ -622,6 +708,19 @@
     if (dropdownState.panel && dropdownState.panel.style.display !== 'none') positionDropdown();
   });
 
+  // Wire email field to use the dropdown in 'emails' mode
+  emailInput.addEventListener('focus', () => openDropdown(emailInput, 'emails'));
+  emailInput.addEventListener('click', () => openDropdown(emailInput, 'emails'));
+  emailInput.addEventListener('input', () => {
+    if (dropdownState.input === emailInput) {
+      dropdownState.keyIndex = -1;
+      renderDropdown(emailInput.value);
+    }
+  });
+  emailInput.addEventListener('keydown', (e) => {
+    if (dropdownState.input === emailInput) handleDropdownKeyboardNav(e);
+  });
+
   // =========================================================
   // ITEM ROWS
   // =========================================================
@@ -692,10 +791,10 @@
       i.addEventListener("input", updateSummary);
     });
 
-    // Wire the custom dropdown to the item-name field
+    // Wire the custom dropdown to the item-name field (in 'items' mode)
     const itemInput = wrap.querySelector('input[data-field="item"]');
-    itemInput.addEventListener('focus', () => openDropdown(itemInput));
-    itemInput.addEventListener('click', () => openDropdown(itemInput));
+    itemInput.addEventListener('focus', () => openDropdown(itemInput, 'items'));
+    itemInput.addEventListener('click', () => openDropdown(itemInput, 'items'));
     itemInput.addEventListener('input', () => {
       if (dropdownState.input === itemInput) {
         dropdownState.keyIndex = -1;
