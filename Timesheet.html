@@ -54,11 +54,45 @@
     color: white; padding: 32px 28px; border-radius: 16px;
     margin-bottom: 24px; display: flex; align-items: center; gap: 24px;
     box-shadow: 0 4px 16px rgba(15, 42, 61, 0.15);
+    position: relative;
   }
   header.top img.logo { height: 64px; width: auto; flex-shrink: 0; }
+  header.top .header-text { flex: 1; }
   header.top .header-text h1 { margin: 0 0 6px 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
   header.top .header-text p { margin: 0; font-size: 13px; line-height: 1.5; opacity: 0.85; font-weight: 300; }
   header.top .header-text b { color: var(--amber); font-weight: 600; }
+
+  /* Help button — floats top right of header */
+  button.help-btn {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    background: rgba(255,255,255,0.12);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+  }
+  button.help-btn:hover { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.4); }
+  button.help-btn .help-icon {
+    display: inline-flex;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--amber);
+    color: var(--navy);
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+  }
 
   .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
   .card h2 { margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: var(--navy); display: flex; align-items: center; gap: 10px; }
@@ -202,7 +236,7 @@
   .add-custom-btn:hover { background: #E0F2F4; }
   .custom-row-headers { display: grid; grid-template-columns: 1fr 1fr 110px 36px; gap: 8px; margin-bottom: 6px; padding: 0 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); font-weight: 600; }
 
-  /* DROPDOWN PANEL — shared by project picker and email picker */
+  /* DROPDOWN PANEL — shared by project, email, and task pickers */
   .project-dropdown {
     position: fixed;
     background: white;
@@ -299,10 +333,145 @@
     text-align: center;
   }
 
+  /* HELP / FAQ MODAL */
+  .help-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 42, 61, 0.55);
+    z-index: 1500;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+    overflow-y: auto;
+  }
+  .help-modal-overlay.active { display: flex; }
+  .help-modal {
+    background: white;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 760px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+    overflow: hidden;
+    margin: auto;
+  }
+  .help-modal-header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
+    color: white;
+    padding: 22px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .help-modal-header .eyebrow { font-size: 10px; letter-spacing: 2px; color: var(--amber); font-weight: 700; margin-bottom: 4px; }
+  .help-modal-header h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  .help-modal-header button.close {
+    background: rgba(255,255,255,0.12);
+    color: white;
+    border: 0;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: background 0.15s;
+  }
+  .help-modal-header button.close:hover { background: rgba(255,255,255,0.22); }
+
+  .help-modal-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--sub-bg);
+  }
+  .help-modal-tabs button {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    padding: 14px 18px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-bottom: 3px solid transparent;
+  }
+  .help-modal-tabs button:hover { color: var(--navy); }
+  .help-modal-tabs button.active {
+    color: var(--navy);
+    background: white;
+    border-bottom-color: var(--amber);
+  }
+
+  .help-modal-body {
+    padding: 24px 28px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .help-section { margin-bottom: 24px; }
+  .help-section:last-child { margin-bottom: 0; }
+  .help-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--teal);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .help-section ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .help-section ul li {
+    padding: 8px 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text);
+    border-bottom: 1px dashed var(--border);
+  }
+  .help-section ul li:last-child { border-bottom: 0; }
+
+  .faq-q {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy);
+    margin: 12px 0 4px 0;
+  }
+  .faq-q:first-child { margin-top: 0; }
+  .faq-a {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text);
+    margin: 0 0 12px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .faq-a:last-child { border-bottom: 0; }
+
+  .help-modal-footer {
+    padding: 14px 28px;
+    background: var(--sub-bg);
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+    text-align: center;
+  }
+
   @media (max-width: 700px) {
     .deco { display: none; }
     header.top { flex-direction: column; text-align: center; padding: 24px 16px; }
     header.top img.logo { height: 48px; }
+    button.help-btn { position: relative; top: 0; right: 0; margin-top: 8px; }
     .row-grid { grid-template-columns: 1fr; }
     table.timesheet thead th.first { min-width: 140px; font-size: 10px; }
     table.timesheet thead th { font-size: 9px; padding: 6px 2px; }
@@ -314,6 +483,8 @@
     .custom-row input { font-size: 12px; padding: 6px 8px; }
     .project-dropdown { max-width: calc(100vw - 32px); }
     .project-dropdown-list { max-height: 280px; }
+    .help-modal { max-width: calc(100vw - 24px); }
+    .help-modal-body { padding: 18px 20px; max-height: 70vh; }
   }
 </style>
 </head>
@@ -332,6 +503,10 @@
         Resubmit anytime, the latest submission overrides the previous one for the same week.
       </p>
     </div>
+    <button type="button" class="help-btn" id="open-help-btn" title="Open the help & FAQ panel">
+      <span class="help-icon">?</span>
+      <span>Help &amp; FAQ</span>
+    </button>
   </header>
 
   <form id="timesheet-form" autocomplete="off">
@@ -373,7 +548,7 @@
       <div class="adhoc-divider">Ad-hoc</div>
 
       <div class="custom-section">
-        <p class="hint">For project work that isn't on the master list above, or quick logs. Pick a project from the dropdown or type a new one. Each row records one project and one task.</p>
+        <p class="hint">For project work that isn't on the master list above, or quick logs. Pick a project from the dropdown or type a new one. Each row records one project and one task. Need inspiration? Click <b>Help &amp; FAQ</b> in the top right to see common ad-hoc examples.</p>
         <div class="custom-row-headers">
           <span>Project name</span>
           <span>Task / activity</span>
@@ -445,6 +620,35 @@
     </div>
 
   </form>
+</div>
+
+<!-- HELP / FAQ MODAL -->
+<div id="help-modal-overlay" class="help-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
+  <div class="help-modal">
+    <div class="help-modal-header">
+      <div>
+        <div class="eyebrow">DATAPILOT</div>
+        <h2 id="help-modal-title">Help &amp; FAQ</h2>
+      </div>
+      <button type="button" class="close" id="close-help-btn" aria-label="Close">&times;</button>
+    </div>
+    <div class="help-modal-tabs">
+      <button type="button" class="active" data-tab="examples">Ad-hoc examples</button>
+      <button type="button" data-tab="faq">FAQ</button>
+    </div>
+    <div class="help-modal-body">
+      <div id="help-tab-examples">
+        <p class="hint" style="margin: 0 0 16px 0">Common ad-hoc situations. Pick one as inspiration when filling the Ad-hoc section, or type your own.</p>
+        <div id="help-examples-content"><p class="hint">Loading examples…</p></div>
+      </div>
+      <div id="help-tab-faq" style="display:none">
+        <div id="help-faq-content"><p class="hint">Loading FAQ…</p></div>
+      </div>
+    </div>
+    <div class="help-modal-footer">
+      Content lives in the <b>AdHocExamples</b> and <b>FAQ</b> tabs of the team Sheet — edit there to update the form.
+    </div>
+  </div>
 </div>
 
 <div id="confirm-screen" class="confirm-screen">
@@ -525,7 +729,9 @@
 
   let PROJECTS = [];
   let ALL_PROJECTS = [];
-  let TEAM_EMAILS = [];   // populated from ?action=users
+  let TEAM_EMAILS = [];
+  let ADHOC_TASK_GROUPS = [];   // [{section, tasks: [...]}]
+  let FAQ_GROUPS = [];          // [{section, items: [{question, answer}]}]
 
   const params = new URLSearchParams(window.location.search);
   if (params.get("email")) document.getElementById("email").value = params.get("email");
@@ -562,31 +768,44 @@
       return;
     }
     try {
-      const [activeResp, allResp, usersResp] = await Promise.all([
+      const [activeResp, allResp, usersResp, tasksResp, faqResp] = await Promise.all([
         fetch(APPS_SCRIPT_URL + "?action=projects", { method: "GET" }),
         fetch(APPS_SCRIPT_URL + "?action=allProjects", { method: "GET" }),
-        fetch(APPS_SCRIPT_URL + "?action=users", { method: "GET" })
+        fetch(APPS_SCRIPT_URL + "?action=users", { method: "GET" }),
+        fetch(APPS_SCRIPT_URL + "?action=adhocTasks", { method: "GET" }),
+        fetch(APPS_SCRIPT_URL + "?action=faq", { method: "GET" })
       ]);
       const activeData = await activeResp.json();
       const allData = await allResp.json();
       const usersData = await usersResp.json();
+      const tasksData = await tasksResp.json();
+      const faqData = await faqResp.json();
+
       PROJECTS = (activeData.ok && Array.isArray(activeData.projects) && activeData.projects.length > 0)
         ? activeData.projects : FALLBACK_PROJECTS;
       ALL_PROJECTS = (allData.ok && Array.isArray(allData.projects) && allData.projects.length > 0)
         ? allData.projects : PROJECTS.slice();
       TEAM_EMAILS = (usersData.ok && Array.isArray(usersData.users))
         ? usersData.users : [];
+      ADHOC_TASK_GROUPS = (tasksData.ok && Array.isArray(tasksData.tasks))
+        ? tasksData.tasks : [];
+      FAQ_GROUPS = (faqData.ok && Array.isArray(faqData.faq))
+        ? faqData.faq : [];
     } catch (err) {
       PROJECTS = FALLBACK_PROJECTS;
       ALL_PROJECTS = FALLBACK_PROJECTS.slice();
       TEAM_EMAILS = [];
+      ADHOC_TASK_GROUPS = [];
+      FAQ_GROUPS = [];
     }
     buildBilling();
+    populateHelpExamples();
+    populateHelpFaq();
   }
 
   // ============================================================
-  // SHARED DROPDOWN COMPONENT — used by both project picker AND email picker
-  // dataMode: 'projects' or 'emails'
+  // SHARED DROPDOWN COMPONENT — projects, emails, and ad-hoc tasks
+  // dataMode: 'projects' | 'emails' | 'tasks'
   // ============================================================
   const dropdownState = {
     panel: null,
@@ -595,7 +814,7 @@
     inactiveExpanded: false,
     keyIndex: -1,
     visibleItems: [],
-    dataMode: 'projects'   // current rendering mode
+    dataMode: 'projects'
   };
 
   function ensureDropdownPanel() {
@@ -650,6 +869,8 @@
   function renderDropdown(filter) {
     if (dropdownState.dataMode === 'emails') {
       renderEmailDropdown(filter);
+    } else if (dropdownState.dataMode === 'tasks') {
+      renderTaskDropdown(filter);
     } else {
       renderProjectDropdown(filter);
     }
@@ -661,8 +882,7 @@
     list.innerHTML = '';
     const term = (filter || '').toLowerCase().trim();
 
-    const matches = TEAM_EMAILS
-      .filter(e => !term || e.indexOf(term) !== -1);
+    const matches = TEAM_EMAILS.filter(e => !term || e.indexOf(term) !== -1);
 
     dropdownState.visibleItems = [];
 
@@ -673,7 +893,6 @@
       list.appendChild(empty);
       return;
     }
-
     if (matches.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'project-dropdown-empty';
@@ -688,7 +907,6 @@
     header.className = 'project-dropdown-header';
     header.textContent = `Team (${matches.length})`;
     list.appendChild(header);
-
     matches.forEach(email => list.appendChild(buildEmailItem(email, term)));
   }
 
@@ -696,12 +914,10 @@
     const item = document.createElement('div');
     item.className = 'project-dropdown-item';
     item.dataset.email = email;
-
     const text = document.createElement('span');
     text.className = 'project-text';
     text.innerHTML = highlightMatch(email, term);
     item.appendChild(text);
-
     item.addEventListener('mousedown', (e) => {
       e.preventDefault();
       if (dropdownState.input) {
@@ -711,7 +927,67 @@
       }
       closeDropdown();
     });
+    dropdownState.visibleItems.push(item);
+    return item;
+  }
 
+  // NEW — ad-hoc task dropdown, grouped by section
+  function renderTaskDropdown(filter) {
+    const panel = dropdownState.panel;
+    const list = panel.querySelector('.project-dropdown-list');
+    list.innerHTML = '';
+    const term = (filter || '').toLowerCase().trim();
+
+    dropdownState.visibleItems = [];
+
+    if (!ADHOC_TASK_GROUPS || ADHOC_TASK_GROUPS.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'project-dropdown-empty';
+      empty.textContent = 'Examples unavailable. Type the task freely.';
+      list.appendChild(empty);
+      return;
+    }
+
+    let totalShown = 0;
+    ADHOC_TASK_GROUPS.forEach(group => {
+      const filtered = (group.tasks || []).filter(t => !term || t.toLowerCase().indexOf(term) !== -1);
+      if (filtered.length === 0) return;
+
+      const header = document.createElement('div');
+      header.className = 'project-dropdown-header';
+      header.textContent = `${group.section} (${filtered.length})`;
+      list.appendChild(header);
+
+      filtered.forEach(t => list.appendChild(buildTaskItem(t, term)));
+      totalShown += filtered.length;
+    });
+
+    if (totalShown === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'project-dropdown-empty';
+      empty.textContent = term
+        ? `No matches. "${term}" will be saved as you type it.`
+        : 'No examples available.';
+      list.appendChild(empty);
+    }
+  }
+
+  function buildTaskItem(taskText, term) {
+    const item = document.createElement('div');
+    item.className = 'project-dropdown-item';
+    item.dataset.taskText = taskText;
+    const text = document.createElement('span');
+    text.className = 'project-text';
+    text.innerHTML = highlightMatch(taskText, term);
+    item.appendChild(text);
+    item.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      if (dropdownState.input) {
+        dropdownState.input.value = taskText;
+        dropdownState.input.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      closeDropdown();
+    });
     dropdownState.visibleItems.push(item);
     return item;
   }
@@ -794,7 +1070,6 @@
       }
       closeDropdown();
     });
-
     dropdownState.visibleItems.push(item);
     return item;
   }
@@ -850,7 +1125,7 @@
     if (dropdownState.panel && dropdownState.panel.style.display !== 'none') positionDropdown();
   });
 
-  // Wire the email field to use the dropdown in 'emails' mode
+  // Wire the email field
   const emailInput = document.getElementById("email");
   emailInput.addEventListener('focus', () => openDropdown(emailInput, 'emails'));
   emailInput.addEventListener('click', () => openDropdown(emailInput, 'emails'));
@@ -969,7 +1244,7 @@
     wrap.dataset.rowid = id;
     wrap.innerHTML = `
       <input type="text" data-kind="custom-project" placeholder="Pick a project or type a new one..." maxlength="120" autocomplete="off">
-      <input type="text" data-kind="custom-task" placeholder="e.g. Documentation, Veille..." maxlength="80" autocomplete="off">
+      <input type="text" data-kind="custom-task" placeholder="Pick an example or type your task..." maxlength="120" autocomplete="off">
       <input type="number" data-kind="custom-days" min="0" step="${STEP}" placeholder="0">
       <button type="button" class="del" title="Remove this row">&times;</button>
     `;
@@ -985,6 +1260,7 @@
     });
     wrap.querySelectorAll('input').forEach(i => i.addEventListener("input", onChange));
 
+    // Wire project field to projects dropdown
     const projInput = wrap.querySelector('input[data-kind="custom-project"]');
     projInput.addEventListener('focus', () => openDropdown(projInput, 'projects'));
     projInput.addEventListener('click', () => openDropdown(projInput, 'projects'));
@@ -996,6 +1272,20 @@
     });
     projInput.addEventListener('keydown', (e) => {
       if (dropdownState.input === projInput) handleDropdownKeyboardNav(e);
+    });
+
+    // NEW — Wire task field to ad-hoc tasks dropdown
+    const taskInput = wrap.querySelector('input[data-kind="custom-task"]');
+    taskInput.addEventListener('focus', () => openDropdown(taskInput, 'tasks'));
+    taskInput.addEventListener('click', () => openDropdown(taskInput, 'tasks'));
+    taskInput.addEventListener('input', () => {
+      if (dropdownState.input === taskInput) {
+        dropdownState.keyIndex = -1;
+        renderDropdown(taskInput.value);
+      }
+    });
+    taskInput.addEventListener('keydown', (e) => {
+      if (dropdownState.input === taskInput) handleDropdownKeyboardNav(e);
     });
   }
 
@@ -1129,7 +1419,6 @@
     return true;
   }
   emailInput.addEventListener("blur", () => {
-    // Slight delay so a click on the dropdown's items can register first
     setTimeout(validateEmail, 150);
   });
   emailInput.addEventListener("input", () => {
@@ -1325,6 +1614,90 @@
   document.getElementById("btn-new").addEventListener("click", () => {
     location.reload();
   });
+
+  // ============================================================
+  // HELP / FAQ MODAL
+  // ============================================================
+  const helpOverlay = document.getElementById('help-modal-overlay');
+  const openHelpBtn = document.getElementById('open-help-btn');
+  const closeHelpBtn = document.getElementById('close-help-btn');
+
+  openHelpBtn.addEventListener('click', () => {
+    helpOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  });
+  closeHelpBtn.addEventListener('click', closeHelp);
+  helpOverlay.addEventListener('click', (e) => {
+    if (e.target === helpOverlay) closeHelp();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && helpOverlay.classList.contains('active')) closeHelp();
+  });
+  function closeHelp() {
+    helpOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  // Tab switching
+  document.querySelectorAll('.help-modal-tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('.help-modal-tabs button').forEach(b => b.classList.toggle('active', b === btn));
+      document.getElementById('help-tab-examples').style.display = (tab === 'examples') ? '' : 'none';
+      document.getElementById('help-tab-faq').style.display = (tab === 'faq') ? '' : 'none';
+    });
+  });
+
+  function populateHelpExamples() {
+    const container = document.getElementById('help-examples-content');
+    container.innerHTML = '';
+    if (!ADHOC_TASK_GROUPS || ADHOC_TASK_GROUPS.length === 0) {
+      container.innerHTML = '<p class="hint">No examples available yet. Add them in the AdHocExamples tab of the Sheet.</p>';
+      return;
+    }
+    ADHOC_TASK_GROUPS.forEach(group => {
+      const section = document.createElement('div');
+      section.className = 'help-section';
+      const h3 = document.createElement('h3');
+      h3.textContent = group.section;
+      section.appendChild(h3);
+      const ul = document.createElement('ul');
+      (group.tasks || []).forEach(t => {
+        const li = document.createElement('li');
+        li.textContent = t;
+        ul.appendChild(li);
+      });
+      section.appendChild(ul);
+      container.appendChild(section);
+    });
+  }
+
+  function populateHelpFaq() {
+    const container = document.getElementById('help-faq-content');
+    container.innerHTML = '';
+    if (!FAQ_GROUPS || FAQ_GROUPS.length === 0) {
+      container.innerHTML = '<p class="hint">No FAQ available yet. Add entries in the FAQ tab of the Sheet.</p>';
+      return;
+    }
+    FAQ_GROUPS.forEach(group => {
+      const section = document.createElement('div');
+      section.className = 'help-section';
+      const h3 = document.createElement('h3');
+      h3.textContent = group.section;
+      section.appendChild(h3);
+      (group.items || []).forEach(item => {
+        const q = document.createElement('p');
+        q.className = 'faq-q';
+        q.textContent = item.question;
+        section.appendChild(q);
+        const a = document.createElement('p');
+        a.className = 'faq-a';
+        a.textContent = item.answer;
+        section.appendChild(a);
+      });
+      container.appendChild(section);
+    });
+  }
 </script>
 </body>
 </html>
