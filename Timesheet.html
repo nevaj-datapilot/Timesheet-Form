@@ -308,21 +308,6 @@
     font-style: italic;
     margin: 0 0 14px 0;
   }
-  .faq-section {
-    margin-bottom: 18px;
-  }
-  .faq-section:last-of-type { margin-bottom: 0; }
-  .faq-section-header {
-    display: block;
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--teal);
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    margin: 0 0 6px 0;
-    padding: 6px 0 6px 0;
-    border-bottom: 1px solid var(--border);
-  }
   details.faq-item {
     border-bottom: 1px solid var(--border);
     padding: 0;
@@ -618,8 +603,8 @@
   let PROJECTS = [];
   let ALL_PROJECTS = [];
   let TEAM_EMAILS = [];
-  let ADHOC_TASK_GROUPS = [];   // [{section, tasks: [...]}]
-  let FAQ_GROUPS = [];          // [{section, items: [{question, answer}]}]
+  let ADHOC_TASKS = [];   // flat array of strings
+  let FAQ_ITEMS = [];     // flat array of {question, answer}
 
   const params = new URLSearchParams(window.location.search);
   if (params.get("email")) document.getElementById("email").value = params.get("email");
@@ -675,16 +660,16 @@
         ? allData.projects : PROJECTS.slice();
       TEAM_EMAILS = (usersData.ok && Array.isArray(usersData.users))
         ? usersData.users : [];
-      ADHOC_TASK_GROUPS = (tasksData.ok && Array.isArray(tasksData.tasks))
+      ADHOC_TASKS = (tasksData.ok && Array.isArray(tasksData.tasks))
         ? tasksData.tasks : [];
-      FAQ_GROUPS = (faqData.ok && Array.isArray(faqData.faq))
+      FAQ_ITEMS = (faqData.ok && Array.isArray(faqData.faq))
         ? faqData.faq : [];
     } catch (err) {
       PROJECTS = FALLBACK_PROJECTS;
       ALL_PROJECTS = FALLBACK_PROJECTS.slice();
       TEAM_EMAILS = [];
-      ADHOC_TASK_GROUPS = [];
-      FAQ_GROUPS = [];
+      ADHOC_TASKS = [];
+      FAQ_ITEMS = [];
     }
     buildBilling();
     populateFaqInline();
@@ -818,7 +803,7 @@
     return item;
   }
 
-  // NEW — ad-hoc task dropdown, grouped by section
+  // NEW — ad-hoc task dropdown, flat list
   function renderTaskDropdown(filter) {
     const panel = dropdownState.panel;
     const list = panel.querySelector('.project-dropdown-list');
@@ -827,7 +812,7 @@
 
     dropdownState.visibleItems = [];
 
-    if (!ADHOC_TASK_GROUPS || ADHOC_TASK_GROUPS.length === 0) {
+    if (!ADHOC_TASKS || ADHOC_TASKS.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'project-dropdown-empty';
       empty.textContent = 'Examples unavailable. Type the task freely.';
@@ -835,28 +820,24 @@
       return;
     }
 
-    let totalShown = 0;
-    ADHOC_TASK_GROUPS.forEach(group => {
-      const filtered = (group.tasks || []).filter(t => !term || t.toLowerCase().indexOf(term) !== -1);
-      if (filtered.length === 0) return;
+    const matches = ADHOC_TASKS.filter(t => !term || t.toLowerCase().indexOf(term) !== -1);
 
-      const header = document.createElement('div');
-      header.className = 'project-dropdown-header';
-      header.textContent = `${group.section} (${filtered.length})`;
-      list.appendChild(header);
-
-      filtered.forEach(t => list.appendChild(buildTaskItem(t, term)));
-      totalShown += filtered.length;
-    });
-
-    if (totalShown === 0) {
+    if (matches.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'project-dropdown-empty';
       empty.textContent = term
         ? `No matches. "${term}" will be saved as you type it.`
         : 'No examples available.';
       list.appendChild(empty);
+      return;
     }
+
+    const header = document.createElement('div');
+    header.className = 'project-dropdown-header';
+    header.textContent = `Examples (${matches.length})`;
+    list.appendChild(header);
+
+    matches.forEach(t => list.appendChild(buildTaskItem(t, term)));
   }
 
   function buildTaskItem(taskText, term) {
@@ -1509,30 +1490,21 @@
     const container = document.getElementById('faq-content');
     if (!container) return;
     container.innerHTML = '';
-    if (!FAQ_GROUPS || FAQ_GROUPS.length === 0) {
+    if (!FAQ_ITEMS || FAQ_ITEMS.length === 0) {
       container.innerHTML = '<p class="hint">No FAQ available yet. Add entries in the FAQ tab of the Sheet.</p>';
       return;
     }
-    FAQ_GROUPS.forEach(group => {
-      const section = document.createElement('div');
-      section.className = 'faq-section';
-      const header = document.createElement('span');
-      header.className = 'faq-section-header';
-      header.textContent = group.section;
-      section.appendChild(header);
-      (group.items || []).forEach(item => {
-        const det = document.createElement('details');
-        det.className = 'faq-item';
-        const summary = document.createElement('summary');
-        summary.textContent = item.question;
-        det.appendChild(summary);
-        const ans = document.createElement('p');
-        ans.className = 'faq-answer';
-        ans.textContent = item.answer;
-        det.appendChild(ans);
-        section.appendChild(det);
-      });
-      container.appendChild(section);
+    FAQ_ITEMS.forEach(item => {
+      const det = document.createElement('details');
+      det.className = 'faq-item';
+      const summary = document.createElement('summary');
+      summary.textContent = item.question;
+      det.appendChild(summary);
+      const ans = document.createElement('p');
+      ans.className = 'faq-answer';
+      ans.textContent = item.answer;
+      det.appendChild(ans);
+      container.appendChild(det);
     });
   }
 </script>
