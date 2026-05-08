@@ -282,6 +282,7 @@
   }
   .project-dropdown-item .project-dot.dot-sprint { background: var(--teal); }
   .project-dropdown-item .project-dot.dot-regie { background: var(--amber); }
+  .project-dropdown-item .project-dot.dot-adhoc { background: var(--pink); }
   .project-dropdown-item .inactive-badge {
     flex-shrink: 0;
     font-size: 9px;
@@ -443,7 +444,7 @@
       <div class="adhoc-divider">Ad-hoc</div>
 
       <div class="custom-section">
-        <p class="hint">For project work that isn't on the master list above, or quick logs. Pick a project from the dropdown or type a new one. The task field has a dropdown of common ad-hoc examples — pick one or type your own.</p>
+        <p class="hint">For client requests that fall outside a project (kept for invoicing). Pick a project from the dropdown — entries here are tagged <b>[Ad-hoc]</b> in the records, regardless of which project you pick.</p>
         <div class="custom-row-headers">
           <span>Project name</span>
           <span>Task / activity</span>
@@ -603,7 +604,6 @@
   let PROJECTS = [];
   let ALL_PROJECTS = [];
   let TEAM_EMAILS = [];
-  let ADHOC_TASKS = [];   // flat array of strings
   let FAQ_ITEMS = [];     // flat array of {question, answer}
 
   const params = new URLSearchParams(window.location.search);
@@ -641,17 +641,15 @@
       return;
     }
     try {
-      const [activeResp, allResp, usersResp, tasksResp, faqResp] = await Promise.all([
+      const [activeResp, allResp, usersResp, faqResp] = await Promise.all([
         fetch(APPS_SCRIPT_URL + "?action=projects", { method: "GET" }),
         fetch(APPS_SCRIPT_URL + "?action=allProjects", { method: "GET" }),
         fetch(APPS_SCRIPT_URL + "?action=users", { method: "GET" }),
-        fetch(APPS_SCRIPT_URL + "?action=adhocTasks", { method: "GET" }),
         fetch(APPS_SCRIPT_URL + "?action=faq", { method: "GET" })
       ]);
       const activeData = await activeResp.json();
       const allData = await allResp.json();
       const usersData = await usersResp.json();
-      const tasksData = await tasksResp.json();
       const faqData = await faqResp.json();
 
       PROJECTS = (activeData.ok && Array.isArray(activeData.projects) && activeData.projects.length > 0)
@@ -660,15 +658,12 @@
         ? allData.projects : PROJECTS.slice();
       TEAM_EMAILS = (usersData.ok && Array.isArray(usersData.users))
         ? usersData.users : [];
-      ADHOC_TASKS = (tasksData.ok && Array.isArray(tasksData.tasks))
-        ? tasksData.tasks : [];
       FAQ_ITEMS = (faqData.ok && Array.isArray(faqData.faq))
         ? faqData.faq : [];
     } catch (err) {
       PROJECTS = FALLBACK_PROJECTS;
       ALL_PROJECTS = FALLBACK_PROJECTS.slice();
       TEAM_EMAILS = [];
-      ADHOC_TASKS = [];
       FAQ_ITEMS = [];
     }
     buildBilling();
@@ -741,8 +736,6 @@
   function renderDropdown(filter) {
     if (dropdownState.dataMode === 'emails') {
       renderEmailDropdown(filter);
-    } else if (dropdownState.dataMode === 'tasks') {
-      renderTaskDropdown(filter);
     } else {
       renderProjectDropdown(filter);
     }
@@ -803,63 +796,6 @@
     return item;
   }
 
-  // NEW — ad-hoc task dropdown, flat list
-  function renderTaskDropdown(filter) {
-    const panel = dropdownState.panel;
-    const list = panel.querySelector('.project-dropdown-list');
-    list.innerHTML = '';
-    const term = (filter || '').toLowerCase().trim();
-
-    dropdownState.visibleItems = [];
-
-    if (!ADHOC_TASKS || ADHOC_TASKS.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'project-dropdown-empty';
-      empty.textContent = 'Examples unavailable. Type the task freely.';
-      list.appendChild(empty);
-      return;
-    }
-
-    const matches = ADHOC_TASKS.filter(t => !term || t.toLowerCase().indexOf(term) !== -1);
-
-    if (matches.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'project-dropdown-empty';
-      empty.textContent = term
-        ? `No matches. "${term}" will be saved as you type it.`
-        : 'No examples available.';
-      list.appendChild(empty);
-      return;
-    }
-
-    const header = document.createElement('div');
-    header.className = 'project-dropdown-header';
-    header.textContent = `Examples (${matches.length})`;
-    list.appendChild(header);
-
-    matches.forEach(t => list.appendChild(buildTaskItem(t, term)));
-  }
-
-  function buildTaskItem(taskText, term) {
-    const item = document.createElement('div');
-    item.className = 'project-dropdown-item';
-    item.dataset.taskText = taskText;
-    const text = document.createElement('span');
-    text.className = 'project-text';
-    text.innerHTML = highlightMatch(taskText, term);
-    item.appendChild(text);
-    item.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      if (dropdownState.input) {
-        dropdownState.input.value = taskText;
-        dropdownState.input.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-      closeDropdown();
-    });
-    dropdownState.visibleItems.push(item);
-    return item;
-  }
-
   function renderProjectDropdown(filter) {
     const panel = dropdownState.panel;
     const list = panel.querySelector('.project-dropdown-list');
@@ -868,10 +804,17 @@
 
     const matches = (p) => !term || p.name.toLowerCase().indexOf(term) !== -1;
 
-    const active = ALL_PROJECTS.filter(p => p.active !== false && matches(p))
-      .sort((a, b) => a.name.localeCompare(b.name));
-    const inactive = ALL_PROJECTS.filter(p => p.active === false && matches(p))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    // Sort: ad-hoc first (alphabetical), then sprint+regie alphabetical
+    const sortFn = (a, b) => {
+      const aAdhoc = a.type === 'adhoc';
+      const bAdhoc = b.type === 'adhoc';
+      if (aAdhoc && !bAdhoc) return -1;
+      if (bAdhoc && !aAdhoc) return 1;
+      return a.name.localeCompare(b.name);
+    };
+
+    const active = ALL_PROJECTS.filter(p => p.active !== false && matches(p)).sort(sortFn);
+    const inactive = ALL_PROJECTS.filter(p => p.active === false && matches(p)).sort(sortFn);
 
     dropdownState.visibleItems = [];
 
@@ -915,7 +858,10 @@
     item.dataset.projectName = p.name;
 
     const dot = document.createElement('span');
-    dot.className = 'project-dot ' + (p.type === 'regie' ? 'dot-regie' : 'dot-sprint');
+    let dotClass = 'dot-sprint';
+    if (p.type === 'regie') dotClass = 'dot-regie';
+    else if (p.type === 'adhoc') dotClass = 'dot-adhoc';
+    dot.className = 'project-dot ' + dotClass;
     item.appendChild(dot);
 
     const text = document.createElement('span');
@@ -1112,7 +1058,7 @@
     wrap.dataset.rowid = id;
     wrap.innerHTML = `
       <input type="text" data-kind="custom-project" placeholder="Pick a project or type a new one..." maxlength="120" autocomplete="off">
-      <input type="text" data-kind="custom-task" placeholder="Pick an example or type your task..." maxlength="120" autocomplete="off">
+      <input type="text" data-kind="custom-task" placeholder="Describe the request..." maxlength="120" autocomplete="off">
       <input type="number" data-kind="custom-days" min="0" step="${STEP}" placeholder="0">
       <button type="button" class="del" title="Remove this row">&times;</button>
     `;
@@ -1142,19 +1088,7 @@
       if (dropdownState.input === projInput) handleDropdownKeyboardNav(e);
     });
 
-    // NEW — Wire task field to ad-hoc tasks dropdown
-    const taskInput = wrap.querySelector('input[data-kind="custom-task"]');
-    taskInput.addEventListener('focus', () => openDropdown(taskInput, 'tasks'));
-    taskInput.addEventListener('click', () => openDropdown(taskInput, 'tasks'));
-    taskInput.addEventListener('input', () => {
-      if (dropdownState.input === taskInput) {
-        dropdownState.keyIndex = -1;
-        renderDropdown(taskInput.value);
-      }
-    });
-    taskInput.addEventListener('keydown', (e) => {
-      if (dropdownState.input === taskInput) handleDropdownKeyboardNav(e);
-    });
+    // Task field is plain free text — no dropdown wiring (removed in v12)
   }
 
   document.getElementById("add-custom-btn").addEventListener("click", () => addCustomRow());
@@ -1319,14 +1253,14 @@
       const days = parseFloat(row.querySelector('input[data-kind="custom-days"]').value);
       if (isNaN(days) || days <= 0) return;
       if (!projectName && !taskName) return;
-      const existsInMaster = ALL_PROJECTS.some(p => p.name === projectName);
+      // Strip any existing prefix ([SPRINT], [REGIE], [Ad-hoc], [CUSTOM])
+      // and replace with [Ad-hoc] — entries in this section are always tagged ad-hoc.
       let storedProject;
       if (!projectName) {
-        storedProject = "[CUSTOM]";
-      } else if (existsInMaster) {
-        storedProject = projectName;
+        storedProject = "[Ad-hoc]";
       } else {
-        storedProject = "[CUSTOM] " + projectName;
+        const cleaned = projectName.replace(/^\[(SPRINT|REGIE|Ad-hoc|CUSTOM)\]\s*/i, '');
+        storedProject = "[Ad-hoc] " + cleaned;
       }
       entries.push({
         category: "Billing",
@@ -1366,7 +1300,8 @@
     }
     (data.entries || []).forEach(en => {
       if (en.category === "Billing" && en.custom) {
-        const projectName = (en.project || '').replace(/^\[CUSTOM\]\s*/, '');
+        // Strip [Ad-hoc] (new) or [CUSTOM] (legacy) prefix when restoring drafts
+        const projectName = (en.project || '').replace(/^\[(Ad-hoc|CUSTOM)\]\s*/i, '');
         const taskName = en.taskOrActivity === '(unspecified)' ? '' : en.taskOrActivity;
         addCustomRow(projectName, taskName, en.days);
       } else if (en.category === "Billing") {
