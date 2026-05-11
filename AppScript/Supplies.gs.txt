@@ -1,0 +1,408 @@
+// =====================================================================
+// DATAPILOT OFFICE SUPPLIES - APPS SCRIPT v3
+// Standalone script for the Office Supplies Request form.
+// Bound to the same Google Sheet as the Timesheet script.
+//
+// Changes from v2:
+//   - Replaced single "UpdatedAt" column with three timestamp columns:
+//     OrderedAt (J), ReceivedAt (K), CancelledAt (L)
+//   - Each status change stamps its own column - keeps full history
+//   - Schema is now 12 columns wide
+// =====================================================================
+
+const SUPPLIES_SHEET = 'SuppliesRequests';
+const SUPPLIES_RECIPIENT = 'nevaj.sunnassy@datapilot.fr'  //'@datapilot.com';   // Office manager / admin email - change as needed (noemie.job@datapilot.fr)
+const SHEET_ID = '1FGqqzBvAI-Og5RpNbz343NUu04cSLItC-b_PiNJNCKU';
+
+function getSpreadsheet() {
+  if (SHEET_ID) {
+    return SpreadsheetApp.openById(SHEET_ID);
+  }
+  return SpreadsheetApp.getActiveSpreadsheet();
+}
+
+// =====================================================================
+// POST - receives a supplies request from the HTML form
+// =====================================================================
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    return handleSuppliesRequest(data);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: String(err) }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function handleSuppliesRequest(data) {
+  const ss = getSpreadsheet();
+  let sheet = ss.getSheetByName(SUPPLIES_SHEET);
+
+  if (!sheet) {
+    sheet = ss.insertSheet(SUPPLIES_SHEET);
+    sheet.appendRow([
+      'SubmittedAt', 'Email', 'Item', 'Quantity', 'Urgency',
+      'WhereToBuy', 'EstimatedCost', 'Reason', 'Status',
+      'OrderedAt', 'ReceivedAt', 'CancelledAt'
+    ]);
+    sheet.getRange(1, 1, 1, 12)
+         .setFontWeight('bold').setBackground('#0F2A3D').setFontColor('white');
+    sheet.setFrozenRows(1);
+
+    // Auto-apply Status dropdown to entire column I (so new rows always get it)
+    applyStatusDropdown(sheet);
+  }
+
+  // Append one row per item (12 columns total)
+  const rows = (data.items || []).map(it => [
+    data.submittedAt,
+    data.email,
+    it.item || '',
+    it.quantity || 1,
+    it.urgency || 'Normal',
+    it.whereToBuy || '',
+    it.estimatedCost || '',
+    it.reason || '',
+    'Pending',
+    '',  // OrderedAt - stamped when status -> Order sent
+    '',  // ReceivedAt - stamped when status -> Received
+    ''   // CancelledAt - stamped when status -> Cancelled
+  ]);
+  if (rows.length > 0) {
+    sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 12).setValues(rows);
+  }
+
+  sendSuppliesEmail(data);
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true, items: rows.length }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// =====================================================================
+// EMAIL - Datapilot-themed HTML notification to office manager
+// =====================================================================
+function sendSuppliesEmail(data) {
+  const items = data.items || [];
+  if (items.length === 0) return;
+
+  const requesterFirstName = extractFirstName(data.email);
+  const requesterDisplay = requesterFirstName
+    ? `${requesterFirstName} (${data.email})`
+    : data.email;
+
+  // Determine highest urgency for subject line
+  const hasUrgent = items.some(it => it.urgency === 'Urgent');
+  const subject = hasUrgent
+    ? `[URGENT] Office supplies request from ${requesterFirstName || data.email} (${items.length} item${items.length > 1 ? 's' : ''})`
+    : `Office supplies request from ${requesterFirstName || data.email} (${items.length} item${items.length > 1 ? 's' : ''})`;
+
+  // Build items table
+  let rowsHtml = '';
+  items.forEach((it) => {
+    const urgencyColor = it.urgency === 'Urgent' ? '#DC2626'
+      : it.urgency === 'Low' ? '#16A34A'
+      : '#2563EB';
+    const urgencyBg = it.urgency === 'Urgent' ? '#FEE2E2'
+      : it.urgency === 'Low' ? '#DCFCE7'
+      : '#DBEAFE';
+
+    const detailParts = [];
+    if (it.whereToBuy)     detailParts.push(`<b>Where:</b> ${escapeHtml(it.whereToBuy)}`);
+    if (it.estimatedCost)  detailParts.push(`<b>Cost:</b> ${escapeHtml(it.estimatedCost)}`);
+    if (it.reason)         detailParts.push(`<b>Reason:</b> ${escapeHtml(it.reason)}`);
+    const detailLine = detailParts.length > 0
+      ? `<br><span style="font-size:11px;color:#6B7280">${detailParts.join(' &middot; ')}</span>`
+      : '';
+
+    rowsHtml += `<tr>
+      <td style="padding:10px 12px;border-bottom:1px solid #E5E7EB;font-size:13px;color:#0F2A3D"><b>${escapeHtml(it.item)}</b>${detailLine}</td>
+      <td style="padding:10px 12px;border-bottom:1px solid #E5E7EB;font-size:13px;text-align:center;font-weight:600;color:#0F2A3D">${it.quantity}</td>
+      <td style="padding:10px 12px;border-bottom:1px solid #E5E7EB;text-align:center"><span style="background:${urgencyBg};color:${urgencyColor};padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px">${escapeHtml(it.urgency)}</span></td>
+    </tr>`;
+  });
+
+  const html = `<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#FAFAFA;font-family:-apple-system,Segoe UI,Roboto,Helvetica,sans-serif">
+  <div style="max-width:640px;margin:0 auto;padding:24px 16px">
+    <div style="background:linear-gradient(135deg,#0F2A3D 0%,#081826 100%);padding:24px 28px;border-radius:12px;color:white;margin-bottom:20px">
+      <div style="font-size:11px;letter-spacing:2px;color:#F5A623;font-weight:600;margin-bottom:4px">DATAPILOT</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">Office Supplies Request</div>
+      <div style="font-size:13px;color:#9CA3AF">Requested by ${escapeHtml(requesterDisplay)}</div>
+    </div>
+
+    <div style="background:white;border-radius:12px;padding:24px;border:1px solid #E5E7EB">
+      <p style="margin:0 0 16px 0;color:#1A1A1A;font-size:14px">Hi,</p>
+      <p style="margin:0 0 18px 0;color:#1A1A1A;font-size:14px">A new office supplies request has been submitted${hasUrgent ? ' with at least one <b style="color:#DC2626">URGENT</b> item' : ''}. Details below.</p>
+
+      <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #E5E7EB;border-radius:6px;overflow:hidden">
+        <thead><tr style="background:#0F2A3D;color:white">
+          <th style="text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Item</th>
+          <th style="text-align:center;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Qty</th>
+          <th style="text-align:center;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Urgency</th>
+        </tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+
+      <p style="margin:24px 0 0 0;padding-top:18px;border-top:1px solid #E5E7EB;font-size:12px;color:#6B7280">
+        <b style="color:#0F2A3D">Reply to ${escapeHtml(data.email)}</b> to confirm or ask questions. Update the status in the <a href="https://docs.google.com/spreadsheets/d/1FGqqzBvAI-Og5RpNbz343NUu04cSLItC-b_PiNJNCKU/edit?gid=470642096#gid=470642096" style="color:#3FA6B8;text-decoration:underline;font-weight:600">SuppliesRequests sheet</a> once handled (Pending &rarr; Order sent &rarr; Received).
+      </p>
+    </div>
+
+    <p style="text-align:center;margin:16px 0 0 0;font-size:11px;color:#9CA3AF">Datapilot &middot; Office Supplies &middot; Auto-generated</p>
+  </div>
+</body></html>`;
+
+  MailApp.sendEmail({
+    to: SUPPLIES_RECIPIENT,
+    replyTo: data.email,
+    subject: subject,
+    htmlBody: html,
+    name: 'Datapilot Supplies'
+  });
+}
+
+// =====================================================================
+// STATUS DROPDOWN - auto-apply to whole column when tab is created
+// =====================================================================
+function applyStatusDropdown(sheet) {
+  const range = sheet.getRange('I2:I1000');  // Status column, future rows
+  const rule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['Pending', 'Order sent', 'Received', 'Cancelled'], true)
+    .setAllowInvalid(true)  // don't block writes from the script
+    .setHelpText('Pick a status: Pending, Order sent, Received, or Cancelled.')
+    .build();
+  range.setDataValidation(rule);
+}
+
+// Manual helper - run once to retroactively add dropdown to an existing tab
+function setupStatusDropdownNow() {
+  const ss = getSpreadsheet();
+  const sheet = ss.getSheetByName(SUPPLIES_SHEET);
+  if (!sheet) {
+    Logger.log('SuppliesRequests tab not found.');
+    return;
+  }
+  applyStatusDropdown(sheet);
+  Logger.log('Status dropdown applied to column I (rows 2-1000).');
+}
+
+// =====================================================================
+// onEdit TRIGGER - fires when someone changes the Status column
+// =====================================================================
+function onSuppliesEdit(e) {
+  if (!e || !e.range) return;
+  const sheet = e.range.getSheet();
+  if (sheet.getName() !== SUPPLIES_SHEET) return;
+
+  // Only react to changes in the Status column (column 9 = "I")
+  const col = e.range.getColumn();
+  if (col !== 9) return;
+
+  // Skip header row
+  const row = e.range.getRow();
+  if (row < 2) return;
+
+  const newStatus = String(e.value || '').trim();
+  const oldStatus = String(e.oldValue || '').trim();
+
+  // Ignore no-op edits
+  if (!newStatus || newStatus === oldStatus) return;
+
+  // Only valid statuses trigger emails
+  const validStatuses = ['Pending', 'Order sent', 'Received', 'Cancelled'];
+  if (validStatuses.indexOf(newStatus) === -1) return;
+
+  // Stamp the right timestamp column based on the status change
+  // Column J (10) = OrderedAt, K (11) = ReceivedAt, L (12) = CancelledAt
+  const stampColumn = {
+    'Order sent': 10,
+    'Received':   11,
+    'Cancelled':  12
+  }[newStatus];
+  if (stampColumn) {
+    sheet.getRange(row, stampColumn).setValue(new Date());
+  }
+
+  // Skip emailing on Pending (default state, already emailed at submission time)
+  if (newStatus === 'Pending') return;
+
+  // Read row data to compose email (12 cols now)
+  const rowData = sheet.getRange(row, 1, 1, 12).getValues()[0];
+  const requester = rowData[1];   // Email
+  const item = rowData[2];
+  const quantity = rowData[3];
+  const reason = rowData[7];
+
+  if (!requester) return;
+
+  sendStatusUpdateEmail({
+    to: requester,
+    item: item,
+    quantity: quantity,
+    reason: reason,
+    newStatus: newStatus,
+    oldStatus: oldStatus
+  });
+}
+
+function sendStatusUpdateEmail(args) {
+  const firstName = extractFirstName(args.to);
+  const greeting = firstName ? `Hi ${firstName},` : 'Hi,';
+
+  let subject, headline, body;
+  switch (args.newStatus) {
+    case 'Order sent':
+      subject = `Your supplies request has been ordered: ${args.item}`;
+      headline = 'Your request has been ordered';
+      body = `Good news! Your request for <b>${escapeHtml(args.item)}</b> (qty ${args.quantity}) has been ordered. We'll let you know when it arrives.`;
+      break;
+    case 'Received':
+      subject = `Your supplies have arrived: ${args.item}`;
+      headline = 'Your supplies are here';
+      body = `Your <b>${escapeHtml(args.item)}</b> (qty ${args.quantity}) ${args.quantity > 1 ? 'have' : 'has'} arrived at the office. Stop by to pick ${args.quantity > 1 ? 'them' : 'it'} up.`;
+      break;
+    case 'Cancelled':
+      subject = `Your supplies request was cancelled: ${args.item}`;
+      headline = 'Your request was cancelled';
+      body = `Your request for <b>${escapeHtml(args.item)}</b> (qty ${args.quantity}) has been cancelled. If you have questions, reply to this email or contact the office manager.`;
+      break;
+    default:
+      return;
+  }
+
+  const reasonHtml = args.reason
+    ? `<p style="margin:12px 0 0 0;font-size:12px;color:#6B7280"><b style="color:#0F2A3D">Original reason:</b> ${escapeHtml(args.reason)}</p>`
+    : '';
+
+  const statusBadge = `<span style="background:${badgeBg(args.newStatus)};color:${badgeColor(args.newStatus)};padding:4px 12px;border-radius:14px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">${escapeHtml(args.newStatus)}</span>`;
+
+  const html = `<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#FAFAFA;font-family:-apple-system,Segoe UI,Roboto,Helvetica,sans-serif">
+  <div style="max-width:560px;margin:0 auto;padding:24px 16px">
+    <div style="background:linear-gradient(135deg,#0F2A3D 0%,#081826 100%);padding:24px 28px;border-radius:12px;color:white;margin-bottom:20px">
+      <div style="font-size:11px;letter-spacing:2px;color:#F5A623;font-weight:600;margin-bottom:4px">DATAPILOT</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">${escapeHtml(headline)}</div>
+      <div style="font-size:13px;color:#9CA3AF">Office supplies update</div>
+    </div>
+
+    <div style="background:white;border-radius:12px;padding:24px;border:1px solid #E5E7EB">
+      <p style="margin:0 0 16px 0;color:#1A1A1A;font-size:14px">${escapeHtml(greeting)}</p>
+      <p style="margin:0 0 16px 0;color:#1A1A1A;font-size:14px;line-height:1.55">${body}</p>
+
+      <div style="margin:18px 0;padding:14px 16px;background:#F7F4EB;border-radius:8px;display:flex;gap:12px;align-items:center">
+        <div style="flex:1">
+          <div style="font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Status</div>
+          <div>${statusBadge}</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Item</div>
+          <div style="font-size:14px;font-weight:600;color:#0F2A3D">${escapeHtml(args.item)} <span style="color:#6B7280;font-weight:400">&times; ${args.quantity}</span></div>
+        </div>
+      </div>
+
+      ${reasonHtml}
+
+      <p style="margin:24px 0 0 0;padding-top:18px;border-top:1px solid #E5E7EB;font-size:11px;color:#9CA3AF;font-style:italic">Auto-generated when GM updates the status. Reply to this email if you need to follow up.</p>
+    </div>
+
+    <p style="text-align:center;margin:16px 0 0 0;font-size:11px;color:#9CA3AF">Datapilot &middot; Office Supplies &middot; Auto-generated</p>
+  </div>
+</body></html>`;
+
+  MailApp.sendEmail({
+    to: args.to,
+    replyTo: SUPPLIES_RECIPIENT,
+    subject: subject,
+    htmlBody: html,
+    name: 'Datapilot Supplies'
+  });
+}
+
+function badgeBg(status) {
+  switch (status) {
+    case 'Order sent': return '#DBEAFE';
+    case 'Received':   return '#DCFCE7';
+    case 'Cancelled':  return '#FEE2E2';
+    default:           return '#E5E7EB';
+  }
+}
+function badgeColor(status) {
+  switch (status) {
+    case 'Order sent': return '#1E40AF';
+    case 'Received':   return '#14532D';
+    case 'Cancelled':  return '#7F1D1D';
+    default:           return '#374151';
+  }
+}
+
+// =====================================================================
+// HELPERS
+// =====================================================================
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, ch => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[ch]));
+}
+
+function extractFirstName(email) {
+  if (!email) return '';
+  const local = String(email).split('@')[0];
+  if (!local) return '';
+  const first = local.split(/[._-]+/)[0];
+  if (!first || first.length < 2) return '';
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+}
+
+// =====================================================================
+// TEST FUNCTIONS
+// =====================================================================
+function test_suppliesRequest() {
+  const fakeEvent = {
+    postData: { contents: JSON.stringify({
+      email: 'nevaj.sunnassy@datapilot.fr',
+      submittedAt: new Date().toISOString(),
+      items: [
+        { item: 'Coffee', quantity: 2, urgency: 'Urgent', whereToBuy: 'Carrefour', estimatedCost: '~30€', reason: 'Out of beans, team revolt imminent' },
+        { item: 'Sticky notes', quantity: 5, urgency: 'Normal', whereToBuy: '', estimatedCost: '', reason: 'For sprint planning' },
+        { item: 'Printer paper', quantity: 1, urgency: 'Low', whereToBuy: '', estimatedCost: '~10€', reason: 'A4, 500 sheets' }
+      ]
+    }) }
+  };
+  Logger.log(doPost(fakeEvent).getContent());
+}
+
+function test_statusChangeEmail() {
+  sendStatusUpdateEmail({
+    to: 'nevaj.sunnassy@datapilot.fr',
+    item: 'Coffee',
+    quantity: 2,
+    reason: 'Out of beans, team revolt imminent',
+    newStatus: 'Received',
+    oldStatus: 'Order sent'
+  });
+  Logger.log('Test status email sent.');
+}
+
+
+
+// Run this ONCE to install the onEdit trigger on the SuppliesRequests Sheet.
+// After running, check Triggers (clock icon) — you'll see "onSuppliesEdit" listed.
+function installEditTrigger() {
+  // Remove any existing onSuppliesEdit triggers to avoid duplicates
+  const triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(t => {
+    if (t.getHandlerFunction() === 'onSuppliesEdit') {
+      ScriptApp.deleteTrigger(t);
+    }
+  });
+
+  // Create the trigger pointing at our specific Sheet
+  ScriptApp.newTrigger('onSuppliesEdit')
+    .forSpreadsheet(SpreadsheetApp.openById(SHEET_ID))
+    .onEdit()
+    .create();
+
+  Logger.log('onEdit trigger installed for SuppliesRequests.');
+}

@@ -1,0 +1,576 @@
+// =====================================================================
+// DATAPILOT TIMESHEET - APPS SCRIPT v16
+// This script handles the Weekly Timesheet form ONLY.
+// The Office Supplies form lives in a separate Apps Script project
+// (also bound to this same Google Sheet), with its own deployment URL.
+//
+// Changes from v15:
+//   - readProjects() now exposes a "label" field per project (pass-through
+//     from the new Sheet column "Label", written by MondaySync v5).
+//   - Type still drives the form section; label drives the prefix tag.
+//   - If label is empty, the form falls back to the type for the prefix.
+// =====================================================================
+
+const CONSOLIDATED_SHEET = 'Consolidated';
+const PROJECTS_SHEET = 'Projects';
+const PLANNING_SHEET = 'NextWeekPlanning';
+const ADHOC_TASKS_SHEET = 'AdHocExamples';
+const FAQ_SHEET = 'FAQ';
+
+// Optional Slack incoming webhook URL. Empty = disabled.
+const SLACK_WEBHOOK_URL = '';
+
+// =====================================================================
+// GET - returns project list / users / ad-hoc tasks / FAQ as JSON
+// =====================================================================
+function doGet(e) {
+  try {
+    const action = (e.parameter && e.parameter.action) || '';
+    if (action === 'projects') {
+      const projects = readProjects(false);
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, projects }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'allProjects') {
+      const projects = readProjects(true);
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, projects }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'users') {
+      const users = readActiveUsers();
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, users }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'adhocTasks') {
+      const tasks = readAdHocTasks();
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, tasks }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'faq') {
+      const faq = readFAQ();
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, faq }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: 'Unknown action' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: String(err) }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function readProjects(includeInactive) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(PROJECTS_SHEET);
+  if (!sheet) return [];
+  const last = sheet.getLastRow();
+  if (last < 2) return [];
+
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const nameIdx = headers.indexOf('Project');
+  const typeIdx = headers.indexOf('Type');
+  const activeIdx = headers.indexOf('Active');
+  const labelIdx = headers.indexOf('Label');  // NEW (added in v16, written by MondaySync v5)
+  if (nameIdx === -1 || typeIdx === -1 || activeIdx === -1) return [];
+
+  const data = sheet.getRange(2, 1, last - 1, sheet.getLastColumn()).getValues();
+  return data
+    .filter(r => {
+      if (!r[nameIdx]) return false;
+      if (includeInactive) return true;
+      return String(r[activeIdx]).trim().toLowerCase() === 'yes';
+    })
+    .map(r => {
+      const typeStr = String(r[typeIdx]).trim().toLowerCase();
+      let type = 'sprint';
+      if (typeStr === 'régie' || typeStr === 'regie') type = 'regie';
+      else if (typeStr === 'ad-hoc' || typeStr === 'adhoc' || typeStr === 'ad hoc') type = 'adhoc';
+      const label = labelIdx === -1 ? '' : String(r[labelIdx] || '').trim();
+      return {
+        name: String(r[nameIdx]).trim(),
+        type: type,
+        label: label,                                 // pass-through from Sheet, may be ''
+        active: String(r[activeIdx]).trim().toLowerCase() === 'yes'
+      };
+    });
+}
+
+// Read active users from the TeamDirectory tab (synced by MondaySync.gs).
+// Returns just the email field as a sorted array of strings.
+function readActiveUsers() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('TeamDirectory');
+  if (!sheet) return [];
+  const last = sheet.getLastRow();
+  if (last < 2) return [];
+
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const emailIdx = headers.indexOf('Email');
+  if (emailIdx === -1) return [];
+
+  const data = sheet.getRange(2, 1, last - 1, sheet.getLastColumn()).getValues();
+  const emails = data
+    .map(r => String(r[emailIdx] || '').trim().toLowerCase())
+    .filter(e => e && e.indexOf('@') !== -1);
+
+  return Array.from(new Set(emails)).sort();
+}
+
+// Read ad-hoc task examples from AdHocExamples tab.
+// Schema: ONE column. Row 1 = 'Example' (header), rows 2+ = examples.
+// Returns: flat array of strings, e.g. ['Setting up gateway...', 'Onboarding...']
+function readAdHocTasks() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(ADHOC_TASKS_SHEET);
+  if (!sheet) return [];
+  const last = sheet.getLastRow();
+  if (last < 2) return [];
+
+  // Start at row 2 to skip the header row
+  const data = sheet.getRange(2, 1, last - 1, 1).getValues();
+  return data
+    .map(row => String(row[0] || '').trim())
+    .filter(s => s.length > 0);
+}
+
+// Read FAQ from FAQ tab.
+// Schema: column A = Question, column B = Answer.
+// Row 1 = headers ('Question' / 'Answer'), always skipped.
+// Returns: flat array of {question, answer} objects.
+function readFAQ() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(FAQ_SHEET);
+  if (!sheet) return [];
+  const last = sheet.getLastRow();
+  if (last < 2) return [];
+
+  // Start at row 2 to skip the header row
+  const data = sheet.getRange(2, 1, last - 1, 2).getValues();
+  const items = [];
+
+  data.forEach(row => {
+    const q = String(row[0] || '').trim();
+    const a = String(row[1] || '').trim();
+    if (!q || !a) return;  // skip empty rows or rows missing either side
+    items.push({ question: q, answer: a });
+  });
+
+  return items;
+}
+
+// =====================================================================
+// ONE-SHOT HELPER — populates AdHocExamples and FAQ tabs with starter
+// content in the SIMPLE flat format. Run this ONCE from the Apps Script
+// editor:
+//   Function dropdown → populateAdHocAndFAQTabs → ▶ Run
+//
+// Schema written:
+//   AdHocExamples: 1 column. Row 1 = 'Example' header. Rows 2+ = examples.
+//   FAQ:           2 columns. Row 1 = 'Question' / 'Answer'. Rows 2+ = Q&A.
+//
+// Re-running OVERWRITES existing content. Don't run if you've made
+// edits you want to keep.
+// =====================================================================
+function populateAdHocAndFAQTabs() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // ---------- AdHocExamples tab ----------
+  let tasksSheet = ss.getSheetByName(ADHOC_TASKS_SHEET);
+  if (!tasksSheet) {
+    tasksSheet = ss.insertSheet(ADHOC_TASKS_SHEET);
+  } else {
+    tasksSheet.clear();
+  }
+
+  // Single-column header
+  tasksSheet.getRange(1, 1).setValue('Example')
+    .setFontWeight('bold').setBackground('#0F2A3D').setFontColor('white');
+  tasksSheet.setFrozenRows(1);
+
+  // Flat list — no section column
+  const adhocData = [
+    'Setting up Power BI gateway on a new machine',
+    'Onboarding a new joiner — creating accounts and provisioning tools',
+    'Configuring VPN access',
+    'Granting tool access (Monday, GitHub, Power BI workspace)',
+    'Setting up database connection for a new project or environment',
+    'Configuring API credentials for a third-party service',
+    'Installing and configuring development tools on a new laptop',
+    'Setting up ODBC connection for a client data source',
+    'Debugging refresh failures on a client Power BI dashboard',
+    'Configuring data source connection before project kickoff',
+    'Preparing the dev environment for a new project (folders, repos, access)',
+    'Setting up the Power BI gateway for a client refresh',
+    'Creating and configuring the Power BI workspace for a project',
+    'Managing permissions and sharing for project files or dashboards',
+    'Validating client data schema before development starts',
+    'Resolving connection or authentication issues on a client environment',
+    'Delivering a tutorial or training session',
+    'Attending a tutorial or training session as a participant',
+    'Walking through code or a dashboard with a colleague',
+    "Knowledge transfer session on a project I'm rolling off / Passation",
+    'Setting up or maintaining the internal Power BI workspace',
+    'Configuring the internal SharePoint site or document library',
+    'Local IT troubleshooting (laptop, software, install issues)',
+    'Renewing or managing software licenses',
+    'Investigating or fixing issues with the internal forms / timesheet system',
+    "Reviewing a colleague's slide deck or proposal",
+    'Ad-hoc client support call outside the regular project scope',
+    'Preparing for an internal kickoff or commercial meeting',
+    'POC — testing a new tool to evaluate it',
+    'Pre-sales POC dashboard or demo for a prospect',
+    'Writing documentation (process, technical, onboarding)',
+    'R&D on a framework, library, or technique',
+    'Add new budget files',
+    'Migration to new data source',
+    'Migration to new software',
+    'Dev new sheet',
+    'Dev new visual',
+    'Data model optimisation'
+  ];
+
+  const adhocRows = adhocData.map(s => [s]);
+  tasksSheet.getRange(2, 1, adhocRows.length, 1).setValues(adhocRows);
+  tasksSheet.setColumnWidth(1, 700);
+
+  // ---------- FAQ tab ----------
+  let faqSheet = ss.getSheetByName(FAQ_SHEET);
+  if (!faqSheet) {
+    faqSheet = ss.insertSheet(FAQ_SHEET);
+  } else {
+    faqSheet.clear();
+  }
+
+  faqSheet.getRange(1, 1, 1, 2).setValues([['Question', 'Answer']]);
+  faqSheet.getRange(1, 1, 1, 2)
+    .setFontWeight('bold').setBackground('#0F2A3D').setFontColor('white');
+  faqSheet.setFrozenRows(1);
+
+  // Flat Q&A list — no section dividers
+  const faqData = [
+    ['How often do I submit?',
+      "Every Friday for the work week (Monday to Friday). The form auto-fills the current week's Monday and will warn you if you try to pick a non-Monday date."],
+    ["What's the smallest unit I can log?",
+      '0.0625 days = 30 minutes. Other useful values: 0.125 = 1h, 0.25 = 2h, 0.5 = half day, 1 = full day.'],
+    ["My week wasn't a standard 5 days. What do I do?",
+      "Just fill the time you spent. If less than 5, the gap auto-fills as 'Autre' (uncategorized). If more than 5, you'll see a warning but you can still submit and the extra time is recorded as overtime."],
+    ['I made a mistake. Can I resubmit?',
+      "Yes. Resubmit the form for the same week. The latest submission overrides the previous one. You'll see a submission counter in the Sheet so we know which version is current."],
+    ['Why is the form remembering my entries when I come back later?',
+      "Drafts are saved in your browser as you type. Clear them with the 'Clear' link near the draft badge if needed. Drafts are local — nobody else sees them until you submit."],
+    ["What's the difference between Sprint, Régie, and Ad-hoc?",
+      "Sprint = fixed-scope project. Régie = ongoing time-and-materials work. Ad-hoc = client requests outside any specific project (tracked separately for invoicing). Sprint and Régie appear in the main Billing time table — Sprint in blue, Régie in orange. Ad-hoc projects from Monday show up in their own pre-populated section at the bottom of the Billing card — one row per project. Just describe the task and log the days."],
+    ["What's the difference between Ad-hoc and Non-billing?",
+      "Ad-hoc = client work outside a regular project, still billable. Non-billing = activities that aren't client work at all (training, internal meetings, R&D, internal product work)."],
+    ['Where do I log internal training, R&D, or internal projects?',
+      'Non-billing section. Pick the closest option (Formations, Production interne, R&D, etc.).'],
+    ['Where do I log holidays, sick days, or planned leave?',
+      "Time off section. Don't put them in Ad-hoc or Non-billing."],
+    ["I'm not sure which category my work belongs to.",
+      'Default rules: client paid for it = Billing (Sprint, Régie, or Ad-hoc). Internal time = Non-billing. Not working = Time off. When in doubt, log it where it feels closest, add a note in Comments at the bottom, and the project lead can adjust.'],
+    ["My ad-hoc client request isn't in the section. What do I do?",
+      "Ping your project lead so they add the request to the Monday board (Ad-hoc group). The next sync will make it appear in the form. There's no way to type a new project freely anymore — Monday is the source of truth."],
+    ["Why does the form ask about next week's WFH and leave?",
+      "It helps the team plan ahead — knowing in advance who'll be remote or out makes scheduling easier. These don't count toward this week's 5 days."],
+    ["Should I fill in heads-up if I'm not sure of my plans?",
+      'Yes — best guess is fine. Resubmit if your plans change.'],
+    ['What goes in the Comments field?',
+      'Anything to flag for the week: unusual situations, blockers, questions, things to discuss with your lead. Optional but useful.'],
+    ["I didn't receive the recap email. What now?",
+      'Check your spam folder first. The email is sent to the address you used in the form.'],
+    ["The recap email shows up as 'unverified sender' in Outlook.",
+      'Known issue, being addressed at the IT level. The email is legitimate and can be safely opened.']
+  ];
+
+  faqSheet.getRange(2, 1, faqData.length, 2).setValues(faqData);
+  faqSheet.setColumnWidth(1, 380);
+  faqSheet.setColumnWidth(2, 600);
+
+  Logger.log('AdHocExamples populated with ' + adhocData.length + ' examples (1 column).');
+  Logger.log('FAQ populated with ' + faqData.length + ' Q&A pairs (2 columns).');
+  return { adhocRows: adhocData.length, faqRows: faqData.length };
+}
+
+// =====================================================================
+// POST - receives a timesheet submission
+// =====================================================================
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(CONSOLIDATED_SHEET);
+
+    if (!sheet) {
+      sheet = ss.insertSheet(CONSOLIDATED_SHEET);
+      sheet.appendRow([
+        'SubmittedAt', 'Email', 'WeekStart', 'SubmissionNumber', 'Category', 'Project',
+        'TaskOrActivity', 'Days', 'Hours', 'WFHNextWeek', 'LeaveNextWeek',
+        'ManualTotal', 'AutoFill', 'Comments'
+      ]);
+      sheet.getRange(1, 1, 1, 14)
+           .setFontWeight('bold').setBackground('#0F2A3D').setFontColor('white');
+      sheet.setFrozenRows(1);
+    }
+
+    const incomingEmail = String(data.email || '').trim().toLowerCase();
+    const incomingWeek = normalizeDateStr(data.weekStart);
+
+    // Count + remove existing rows for this user-week
+    let priorSubmissions = 0;
+    const lastRow = sheet.getLastRow();
+    if (lastRow > 1) {
+      const existing = sheet.getRange(2, 2, lastRow - 1, 3).getValues();
+      const seenNumbers = new Set();
+      for (let i = existing.length - 1; i >= 0; i--) {
+        const rEmail = String(existing[i][0] || '').trim().toLowerCase();
+        const rWeek = normalizeDateStr(existing[i][1]);
+        if (rEmail === incomingEmail && rWeek === incomingWeek) {
+          seenNumbers.add(existing[i][2]);
+          sheet.deleteRow(i + 2);
+        }
+      }
+      priorSubmissions = seenNumbers.size;
+    }
+    const submissionNumber = priorSubmissions + 1;
+
+    // Append new rows
+    const rows = (data.entries || []).map(en => [
+      data.submittedAt,
+      data.email,
+      data.weekStart,
+      submissionNumber,
+      en.category,
+      en.project || '',
+      en.taskOrActivity,
+      en.days,
+      en.days * 8, // Hours = Days * 8
+      data.nextWfh || '',
+      data.nextLeave || '',
+      data.manualTotal,
+      data.autoFill,
+      data.comments || ''
+    ]);
+    if (rows.length > 0) {
+      sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 14).setValues(rows);
+    }
+
+    // Mirror next-week planning to its own dedicated tab
+    if (data.nextWfh || data.nextLeave) {
+      let planning = ss.getSheetByName(PLANNING_SHEET);
+      if (!planning) {
+        planning = ss.insertSheet(PLANNING_SHEET);
+        planning.appendRow([
+          'SubmittedAt', 'Email', 'WeekStartReferenced', 'NextWeekStart',
+          'WFHNextWeek', 'LeaveNextWeek'
+        ]);
+        planning.getRange(1, 1, 1, 6)
+                .setFontWeight('bold').setBackground('#3FA6B8').setFontColor('white');
+        planning.setFrozenRows(1);
+      }
+
+      let nextWeekStart = '';
+      try {
+        const d = new Date(incomingWeek + 'T00:00:00');
+        d.setDate(d.getDate() + 7);
+        nextWeekStart = d.toISOString().slice(0, 10);
+      } catch (e) {}
+
+      const pLastRow = planning.getLastRow();
+      if (pLastRow > 1) {
+        const pData = planning.getRange(2, 2, pLastRow - 1, 2).getValues();
+        for (let i = pData.length - 1; i >= 0; i--) {
+          const rEmail = String(pData[i][0] || '').trim().toLowerCase();
+          const rWeek = normalizeDateStr(pData[i][1]);
+          if (rEmail === incomingEmail && rWeek === incomingWeek) {
+            planning.deleteRow(i + 2);
+          }
+        }
+      }
+
+      planning.appendRow([
+        data.submittedAt,
+        data.email,
+        data.weekStart,
+        nextWeekStart,
+        data.nextWfh || '',
+        data.nextLeave || ''
+      ]);
+    }
+
+    sendRecapEmail(data);
+    if (SLACK_WEBHOOK_URL) sendSlackPing(data);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: true, rows: rows.length, submissionNumber }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: String(err) }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// =====================================================================
+// EMAIL - DataPilot-themed HTML recap
+// =====================================================================
+function sendRecapEmail(data) {
+  if (!data.email) return;
+
+  const isOver = data.manualTotal > 5.0001;
+  const isAuto = !isOver && data.autoFill > 0.0001;
+  const firstName = extractFirstName(data.email);
+  const greeting = firstName ? `Hi ${firstName},` : 'Hi,';
+
+  const subject = isOver
+    ? `DataPilot Timesheet: overtime week of ${data.weekStart} (${formatNum(data.manualTotal)} days)`
+    : isAuto
+      ? `DataPilot Timesheet logged: ${formatNum(data.autoFill)}d autofilled to Autre`
+      : `DataPilot Timesheet logged: week of ${data.weekStart}`;
+
+  let rowsHtml = '';
+  (data.entries || []).forEach(en => {
+    const isAutoRow = en.taskOrActivity && en.taskOrActivity.indexOf('(auto)') !== -1;
+    const bg = isAutoRow ? '#FFE4B5' : 'white';
+    const detail = en.project ? `${escapeHtml(en.project)} <span style="color:#6B7280">› ${escapeHtml(en.taskOrActivity)}</span>` : escapeHtml(en.taskOrActivity);
+    rowsHtml += `<tr style="background:${bg}"><td style="padding:8px 12px;border-bottom:1px solid #E5E7EB;font-size:12px">${escapeHtml(en.category)}</td><td style="padding:8px 12px;border-bottom:1px solid #E5E7EB;font-size:13px">${detail}</td><td style="padding:8px 12px;border-bottom:1px solid #E5E7EB;text-align:right;font-weight:600;color:#0F2A3D">${formatNum(en.days)}</td></tr>`;
+  });
+
+  let banner = '';
+  if (isOver) {
+    const overAmount = data.manualTotal - 5;
+    banner = `<div style="background:#FEF3C7;border-left:4px solid #F5A623;padding:14px 18px;border-radius:6px;margin:0 0 20px 0;color:#0F2A3D"><b>Overtime week: ${formatNum(data.manualTotal)} days logged</b><br>That's ${formatNum(overAmount)} day(s) over the standard 5. Your submission has been recorded.</div>`;
+  } else if (isAuto) {
+    banner = `<div style="background:#FEF3C7;border-left:4px solid #F5A623;padding:14px 18px;border-radius:6px;margin:0 0 20px 0;color:#0F2A3D"><b>${formatNum(data.autoFill)} day(s) autofilled to Autre (uncategorized)</b><br>You logged ${formatNum(data.manualTotal)}d manually. Total reaches 5 days.</div>`;
+  } else {
+    banner = `<div style="background:#DCFCE7;border-left:4px solid #16A34A;padding:14px 18px;border-radius:6px;margin:0 0 20px 0;color:#14532D"><b>All 5 days logged</b><br>Manual entry exactly matches the target. Nicely done.</div>`;
+  }
+
+  const html = `<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#FAFAFA;font-family:-apple-system,Segoe UI,Roboto,Helvetica,sans-serif">
+  <div style="max-width:640px;margin:0 auto;padding:24px 16px">
+    <div style="background:linear-gradient(135deg,#0F2A3D 0%,#081826 100%);padding:24px 28px;border-radius:12px;color:white;margin-bottom:20px">
+      <div style="font-size:11px;letter-spacing:2px;color:#F5A623;font-weight:600;margin-bottom:4px">DATAPILOT</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">Weekly Timesheet</div>
+      <div style="font-size:13px;color:#9CA3AF">Week of ${escapeHtml(data.weekStart)}</div>
+    </div>
+
+    <div style="background:white;border-radius:12px;padding:24px;border:1px solid #E5E7EB">
+      <p style="margin:0 0 16px 0;color:#1A1A1A;font-size:14px">${escapeHtml(greeting)}</p>
+      ${banner}
+
+      <h3 style="font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px 0;font-weight:600">Submission summary</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #E5E7EB;border-radius:6px;overflow:hidden">
+        <thead><tr style="background:#0F2A3D;color:white"><th style="text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Category</th><th style="text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Detail</th><th style="text-align:right;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Days</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+        <tfoot><tr style="background:#0F2A3D;color:white"><td colspan="2" style="padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600">Total</td><td style="padding:10px 12px;text-align:right;font-weight:700;color:#F5A623">${formatNum(data.manualTotal + data.autoFill)} / 5</td></tr></tfoot>
+      </table>
+
+      ${data.nextWfh ? `<p style="margin:18px 0 0 0;font-size:13px;color:#6B7280"><b style="color:#3FA6B8">WFH next week:</b> ${escapeHtml(data.nextWfh)}</p>` : ''}
+      ${data.nextLeave ? `<p style="margin:8px 0 0 0;font-size:13px;color:#6B7280"><b style="color:#3FA6B8">Planned leave next week:</b> ${escapeHtml(data.nextLeave)}</p>` : ''}
+      ${data.comments ? `<p style="margin:8px 0 0 0;font-size:13px;color:#6B7280"><b style="color:#0F2A3D">Comments:</b> ${escapeHtml(data.comments)}</p>` : ''}
+
+      <p style="margin:24px 0 0 0;padding-top:18px;border-top:1px solid #E5E7EB;font-size:11px;color:#9CA3AF;font-style:italic">Need to fix something? Resubmit the form for the same week and your latest submission will override the previous one.</p>
+    </div>
+
+    <p style="text-align:center;margin:16px 0 0 0;font-size:11px;color:#9CA3AF">DataPilot · Weekly Timesheet · Auto-generated</p>
+  </div>
+</body></html>`;
+
+  MailApp.sendEmail({
+    to: data.email,
+    subject: subject,
+    htmlBody: html,
+    name: 'DataPilot Timesheet'
+  });
+}
+
+// =====================================================================
+// SLACK
+// =====================================================================
+function sendSlackPing(data) {
+  const isOver = data.manualTotal > 5.0001;
+  const prefix = isOver ? '[OVERTIME]' : (data.autoFill > 0 ? '[AUTO]' : '[OK]');
+  const text = `${prefix} *Timesheet submitted* by ${data.email} · week of ${data.weekStart} · ${formatNum(data.manualTotal)}d manual + ${formatNum(data.autoFill)}d auto`;
+  try {
+    UrlFetchApp.fetch(SLACK_WEBHOOK_URL, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify({ text }),
+      muteHttpExceptions: true
+    });
+  } catch (err) {
+    Logger.log('Slack ping failed: ' + err);
+  }
+}
+
+// =====================================================================
+// HELPERS
+// =====================================================================
+function formatNum(n) {
+  if (typeof n !== 'number') n = parseFloat(n) || 0;
+  if (n === 0) return '0';
+  return parseFloat(n.toFixed(4)).toString();
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, ch => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[ch]));
+}
+
+function extractFirstName(email) {
+  if (!email) return '';
+  const local = String(email).split('@')[0];
+  if (!local) return '';
+  const first = local.split(/[._-]+/)[0];
+  if (!first || first.length < 2) return '';
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+}
+
+function normalizeDateStr(v) {
+  if (!v) return '';
+  if (v instanceof Date) {
+    return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  }
+  return String(v).slice(0, 10);
+}
+
+// =====================================================================
+// TEST FUNCTIONS
+// =====================================================================
+function test_readAdHocTasks() {
+  Logger.log(JSON.stringify(readAdHocTasks(), null, 2));
+}
+
+function test_readFAQ() {
+  Logger.log(JSON.stringify(readFAQ(), null, 2));
+}
+
+function test_doPost() {
+  const fakeEvent = {
+    postData: { contents: JSON.stringify({
+      email: 'test@datapilot.fr',
+      weekStart: '2026-04-27',
+      nextWfh: 'Wed,Fri',
+      nextLeave: '',
+      comments: 'Test submission',
+      entries: [
+        { category: 'Billing', project: '[SPRINT] SUEZ', taskOrActivity: 'Développement', days: 2 },
+        { category: 'Non-billing', project: '', taskOrActivity: 'Production interne', days: 0.5 },
+        { category: 'Off', project: '', taskOrActivity: 'Public holiday', days: 1 },
+        { category: 'Non-billing', project: '', taskOrActivity: 'Autre (auto)', days: 1.5 }
+      ],
+      manualTotal: 3.5,
+      autoFill: 1.5,
+      submittedAt: new Date().toISOString()
+    }) }
+  };
+  Logger.log(doPost(fakeEvent).getContent());
+}
