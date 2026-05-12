@@ -6,9 +6,9 @@ The system is deployed and in active use. URLs are kept in the team's shared Dat
 
 | Page | Purpose |
 |---|---|
-| Landing | Index of available forms | https://datapilot-gitenvironmennt.github.io/Datapilot-Forms/
-| Timesheet | Weekly timesheet | https://datapilot-gitenvironmennt.github.io/Datapilot-Forms/Timesheet.html
-| Supplies | Office supplies request | https://datapilot-gitenvironmennt.github.io/Datapilot-Forms/Supplies.html
+| Landing | Index of available forms | https://datapilot-gitenvironmennt.github.io/Datapilot-Forms/ |
+| Timesheet | Weekly timesheet | https://datapilot-gitenvironmennt.github.io/Datapilot-Forms/Timesheet.html |
+| Supplies | Office supplies request | https://datapilot-gitenvironmennt.github.io/Datapilot-Forms/Supplies.html |
 
 ---
 
