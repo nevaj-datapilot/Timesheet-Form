@@ -1,44 +1,44 @@
-# Datapilot Internal Forms
 
-A lightweight set of internal forms for Datapilot's team, replacing manual timesheet tracking and ad-hoc supplies requests with a few simple browser-based forms that write everything into a single Google Sheet.
 
-The two main forms are a weekly timesheet (where consultants log billable, non-billable, and time-off hours, plus heads-up for next week's WFH and leave) and an office supplies request form (where anyone can request office items, with status updates emailed back as the office manager handles them). A small landing page at the root links to both.
+## Live
 
-Everything is hosted on GitHub Pages for the front-end, with Google Apps Script as the back-end and Google Sheets as the database. There is no server to maintain, no cloud bill, and no separate deployment pipeline. Changes go live through a Git commit (for HTML) or a redeploy from within the Apps Script editor (for the server-side logic).
+The system is deployed and in active use. URLs are kept in the team's shared Datapilot space, not in this public README.
 
-## Quick links
+| Page | Purpose |
+|---|---|
+| Landing | Index of available forms | https://datapilot-gitenvironmennt.github.io/Datapilot-Forms/
+| Timesheet | Weekly timesheet | https://datapilot-gitenvironmennt.github.io/Datapilot-Forms/Timesheet.html
+| Supplies | Office supplies request | https://datapilot-gitenvironmennt.github.io/Datapilot-Forms/Supplies.html
 
-For a non-technical walkthrough of how to operate the system day-to-day, including adding a new project on Monday, editing the FAQ, handling a team member joining or leaving, and what to do when something seems broken, see the Operations Manual document maintained alongside this repository.
+---
 
-For the full technical handover, see the Technical Handover document. It covers architecture diagrams, the complete data flow for both form submissions and the daily Monday sync, deployment workflow, ownership transfers, every gotcha encountered during the build, and a troubleshooting playbook. This is the right place to start if you are picking up this project as a developer and need to understand or extend any part of it.
-
-## Architecture at a glance
+## Architecture
 
 ```mermaid
 flowchart LR
-    User([Datapilot team<br/>consultants, office manager])
+    User([Datapilot team])
 
-    subgraph Frontend["GitHub Pages (front-end)"]
+    subgraph Frontend["GitHub Pages"]
         IndexHTML[index.html]
         TimesheetHTML[Timesheet.html]
         SuppliesHTML[Supplies.html]
     end
 
-    subgraph Backend["Google Apps Script (back-end)"]
-        TimesheetGS[Timesheet_forms<br/>bound to Sheet]
+    subgraph Backend["Apps Script"]
+        TimesheetGS[Timesheet_forms<br/>bound]
         SuppliesGS[Supplies<br/>standalone]
-        SyncGS[MondaySync<br/>inside Timesheet_forms]
+        SyncGS[MondaySync<br/>cron]
     end
 
-    Sheet[(Google Sheet<br/>8 tabs<br/>persistent storage)]
-    Monday[(Monday.com<br/>source of truth<br/>projects + team)]
+    Sheet[(Google Sheet<br/>8 tabs)]
+    Monday[(Monday.com)]
     PowerBI{{Power BI<br/>planned}}
 
-    User -->|opens form| Frontend
-    Frontend <-->|JSON GET / POST| Backend
-    Backend <-->|read + write| Sheet
-    Monday -.->|nightly sync| SyncGS
-    SyncGS -->|writes Projects + TeamDirectory| Sheet
+    User -->|GET| Frontend
+    Frontend <-->|JSON| Backend
+    Backend <-->|read/write| Sheet
+    Monday -.->|nightly| SyncGS
+    SyncGS -->|writes| Sheet
     Sheet -.->|future| PowerBI
 
     style Frontend fill:#E0F2F4,stroke:#3FA6B8
@@ -48,38 +48,142 @@ flowchart LR
     style PowerBI fill:#F7F4EB,stroke:#6B7280,stroke-dasharray: 5 5
 ```
 
-The picture above is rendered natively by GitHub when you view this README on the web. The same architecture is shown with much more detail and additional flow diagrams inside the Technical Handover document. If you are reading this on a tool that does not render Mermaid, the diagram is also available as a static image in the Technical Handover.
+Full architecture and flow diagrams in [Technical_Handover.docx](./docs/Technical_Handover.docx).
 
-## Live forms
+---
 
-The forms are currently served from the personal GitHub Pages site of the original developer at `https://nevaj-datapilot.github.io/Datapilot-Forms/`. Once the repository transfer to the Datapilot GitHub organization is complete and the new maintainer has been granted Maintain access (necessary for configuring GitHub Pages on the new location), the URL will move to the organization's GitHub Pages domain. Update this section once that migration happens.
+## Repo layout
 
-The three pages are an index landing page at the root, the weekly timesheet at `/Timesheet.html`, and the office supplies request form at `/Supplies.html`.
+```
+.
+├── index.html                Landing page
+├── Timesheet.html            Weekly timesheet form
+├── Supplies.html             Office supplies request form
+├── brand-elements/           Logo, favicon, decorative PNGs
+```
 
-## Repository contents
+---
 
-This repository contains only the front-end HTML files and brand assets. The server-side Apps Script code lives separately inside Google Drive, bound to the shared Google Sheet, and is not version-controlled in this repo. Copies of the Apps Script files are included here under an `apps-script/` directory for reference and reading, but editing those files in this repository does not change the deployed back-end. To change the back-end, you must edit the script project directly in the Google Apps Script editor.
+## Stack
 
-The HTML files in this repository are `index.html` (landing page with cards linking to each form), `Timesheet.html` (weekly timesheet form), and `Supplies.html` (office supplies request form). They share a common visual language and brand styling but are otherwise independent.
+| Layer | Tech | Notes |
+|---|---|---|
+| Hosting | GitHub Pages | Static HTML, served from `main` branch |
+| Back-end | Google Apps Script | Two projects: `Timesheet_forms` (bound to Sheet), `Supplies` (standalone) |
+| Database | Google Sheets | 8 tabs, see `Technical Handover` |
+| Upstream | Monday.com | Synced nightly |
+| Email | Gmail (via Apps Script) | Sent from the role-based maintainer account |
+| Reporting | Power BI | Planned, not built |
 
-The `brand-elements/` folder contains decorative PNG assets that the forms reference, along with the Datapilot logo and favicon image.
+---
 
-## How a deploy works
+## Deploy
 
-For a front-end change (HTML, CSS, or client-side JavaScript inside one of the form files), edit the relevant `.html` file in this repository, commit and push to the main branch, and GitHub Pages will pick up the change within roughly one minute. Users should hard-refresh their browser (Ctrl+F5 on Windows, Cmd+Shift+R on Mac) to bypass cached versions of the page.
+### Front-end (HTML / CSS / client JS)
 
-For a back-end change (Apps Script logic, email templates, sync behavior, or anything in the `.gs` files), open the relevant Apps Script project in your browser, paste in the new code, save with Ctrl+S, and then redeploy the Web App through Deploy > Manage deployments > pencil icon > New version > Deploy. The deployment URL stays stable across redeploys, so no front-end changes are needed when only the back-end changes. Detailed steps are in the Technical Handover document.
+```sh
+git add Timesheet.html
+git commit -m "fix: dropdown width on mobile"
+git push origin main
+```
 
-## The pieces, briefly
+GitHub Pages picks up the change in ~1 min. Users hard-refresh (<kbd>Ctrl</kbd>+<kbd>F5</kbd> / <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>) to bypass cache.
 
-The complete system consists of three GitHub-hosted HTML files, two separate Google Apps Script projects (one for the timesheet which is bound to the Google Sheet, and one standalone project for the supplies form), one Monday-to-Sheet sync script that runs daily, and one shared Google Sheet that holds everything. Monday.com is treated as the upstream source of truth for projects and team members. These flow into the Sheet automatically every night through the sync script, and the timesheet form reads from the Sheet to populate its project dropdown and ad-hoc section.
+### Back-end (Apps Script)
 
-The shared Google Sheet has several tabs serving different purposes. The `Consolidated` tab is where every submitted timesheet entry ends up, one row per entry. The `Projects` tab is populated automatically from Monday and read by the form. The `TeamDirectory` tab is also synced from Monday and provides the team email dropdown. The `NextWeekPlanning` tab mirrors the heads-up section of each timesheet submission for easier weekly reporting. The `SuppliesRequests` tab receives supplies form submissions, with editable status columns that trigger automatic status update emails to the requester. The `AdHocExamples` and `FAQ` tabs hold content that the timesheet form fetches and displays inline. All other technical details, including the relationships between tabs and the column schemas, are in the Technical Handover.
+1. Open the Apps Script project (link below).
+2. Edit `Code.gs` or `MondaySync.gs`. Save with <kbd>Ctrl</kbd>+<kbd>S</kbd>.
+3. **Deploy → Manage deployments → ✏️ → New version → Deploy.**
+
+Web App URL stays stable across redeploys. No front-end change needed unless the endpoint shape changes.
+
+### Apps Script projects
+
+| Project | URL |
+|---|---|
+| `Timesheet_forms` (bound) | Open via the Sheet → Extensions → Apps Script |
+| `Supplies` (standalone) | https://script.google.com/home (filter by owner) |
+
+---
+
+## Data
+
+### Google Sheet
+
+| Tab | Writer | Reader | Notes |
+|---|---|---|---|
+| `Consolidated` | Timesheet form | Power BI* | 1 row per timesheet entry |
+| `Projects` | MondaySync | Both forms | Cached from Monday, refreshed nightly |
+| `TeamDirectory` | MondaySync | Both forms | Active users only |
+| `NextWeekPlanning` | Timesheet form | Power BI* | Heads-up rollup |
+| `SuppliesRequests` | Supplies form, onEdit trigger | Office manager | 1 row per item |
+| `AdHocExamples` | Manual | (none) | Reference only, not surfaced in form |
+| `FAQ` | Manual | Timesheet form | Q&A panel content |
+| `_SyncLog` | MondaySync | Developers | Hidden by default |
+
+
+
+### Project classification
+
+```
+Monday group title contains  →  type
+─────────────────────────────────────────────────
+"ad-hoc" / "ad hoc" / "adhoc"   →  adhoc
+"régie" / "regie" / "maintenance" →  regie
+"projets actifs" / "sprint"     →  sprint
+(anything else)                  →  autre  ← data-only, not shown in form
+```
+
+The form renders sections for `sprint`, `regie`, `adhoc`. `autre` is tracked in the Sheet for completeness but doesn't appear in the UI. Logic: `MondaySync.classifyGroup()`.
+
+---
+
+## Common tasks
+
+| Task | Where |
+|---|---|
+| Add a new project | Monday board, group `Projets Actifs` / `Régies / Maintenance` / `Ad-hoc` |
+| Add/remove a team member | Monday admin panel |
+| Edit the FAQ | Sheet → `FAQ` tab |
+| Force a Monday sync now | Sheet → menu **Monday Sync → Sync everything** |
+| Read sync history | Sheet → `_SyncLog` tab (unhide first) |
+| Update a supplies request status | Sheet → `SuppliesRequests` tab → Status cell |
+
+
+
+---
+
+## Troubleshooting
+
+| Symptom | First check |
+|---|---|
+| Form won't load | Hard-refresh, then GitHub Pages status |
+| Project missing from dropdown | Monday group correct? Statut `En cours`? Then run a manual sync |
+| No recap email after submit | Spam folder. Then Apps Script execution log |
+| Sync hasn't run | `_SyncLog` tab. If stale, trigger needs re-creation under owner account |
+| Status update email from wrong sender | Web App was deployed under a different identity. Redeploy under owner |
+
+Decision tree on Operations_Manual
+
+---
 
 ## Maintainer
 
-The original developer of this system is Nevaj Sunnassy at Datapilot. Going forward, ownership of the Google Sheet, both Apps Script projects, and this GitHub repository should rest with a stable Datapilot account (currently `consultant@datapilot.fr`) so that the system survives any individual leaving the company. The Technical Handover document includes a checklist for completing this transfer and verifying all the moving parts still work afterward.
+| | |
+|---|---|
+| Owner | Role-based Datapilot account (consultant@datapilo.fr) |
+|  Developer | Nevaj Sunnassy |
+| GitHub repo | Datapilot organization |
 
-## Status
 
-The system is live and in active use. The timesheet form is deployed and being used by the team weekly. The supplies form is deployed and working. The Monday sync runs daily under the original developer's account and needs to be re-created under a stable account as part of the ownership transfer. A Power BI dashboard reading from the `Consolidated` and `Projects` tabs is planned but not yet built.
+---
+
+## Docs
+
+| File | Audience | When to read |
+|---|---|---|
+| [Technical_Handover.docx](./docs/Technical_Handover.docx) | Developers | Picking up the project, extending it, debugging |
+| [Operations_Manual.docx](./docs/Operations_Manual.docx) | Project leads, office manager | Learning how to operate the system |
+| [Quick_Reference.docx](./docs/Quick_Reference.docx) | Same as above | Doing a task right now |
+
+---
