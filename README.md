@@ -171,7 +171,7 @@ Decision tree on Operations_Manual
 
 | | |
 |---|---|
-| Owner | Role-based Datapilot account (consultant@datapilo.fr) |
+| Owner | Role-based Datapilot account (consultant@datapilot.fr) |
 |  Developer | Nevaj Sunnassy |
 | GitHub repo | Datapilot organization |
 
